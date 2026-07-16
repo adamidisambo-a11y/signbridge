@@ -1,0 +1,1738 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>SignBridge — Speak the World in Signs</title>
+<meta name="description" content="Free speech-to-sign language translator. Converts spoken sentences into illustrated ASL, BSL, and 4 more sign language diagrams with grammar engine.">
+<meta name="theme-color" content="#0a0e1a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SignBridge">
+<!-- Open Graph -->
+<meta property="og:title" content="SignBridge — Speak the World in Signs">
+<meta property="og:description" content="Free speech-to-sign language translator with grammar engine and illustrated hand diagrams.">
+<meta property="og:type" content="website">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════
+   THEME VARIABLES
+══════════════════════════════════════════════ */
+[data-theme="dark"]{
+  --bg:#0a0e1a;--surface:#111827;--surface2:#1a2235;--surface3:#202d42;
+  --accent:#00e5ff;--accent2:#7c3aed;--accent3:#f59e0b;--green:#10b981;--red:#ef4444;
+  --text:#e8edf5;--muted:#6b7a99;--border:rgba(0,229,255,0.12);
+  --glow:0 0 40px rgba(0,229,255,0.15);--card-bg:#1a2235;--shadow:rgba(0,0,0,0.4);
+  --grid:rgba(0,229,255,0.03);
+}
+[data-theme="light"]{
+  --bg:#f0f4ff;--surface:#fff;--surface2:#f5f7ff;--surface3:#eef1fc;
+  --accent:#0077cc;--accent2:#6d28d9;--accent3:#d97706;--green:#059669;--red:#dc2626;
+  --text:#0f172a;--muted:#64748b;--border:rgba(0,119,204,0.15);
+  --glow:0 4px 20px rgba(0,119,204,0.12);--card-bg:#f5f7ff;--shadow:rgba(15,23,42,0.08);
+  --grid:rgba(0,119,204,0.04);
+}
+
+/* ══════════════════════════════════════════════
+   BASE
+══════════════════════════════════════════════ */
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-height:100vh;overflow-x:hidden;transition:background .3s,color .3s;}
+[data-theme="dark"] body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+[data-theme="dark"] body::after{content:'';position:fixed;top:-200px;right:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(124,58,237,0.12) 0%,transparent 70%);pointer-events:none;z-index:0;}
+.container{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:0 24px;}
+.skip-link{position:absolute;top:-60px;left:16px;background:var(--accent);color:#000;padding:8px 16px;border-radius:8px;font-size:0.85rem;font-weight:700;z-index:9999;transition:top .2s;text-decoration:none;}
+.skip-link:focus{top:8px;}
+body.high-contrast{filter:contrast(1.55) saturate(1.2);}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
+
+/* ══════════════════════════════════════════════
+   ONBOARDING SPLASH
+══════════════════════════════════════════════ */
+.splash{position:fixed;inset:0;background:var(--bg);z-index:500;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0;padding:24px;}
+.splash.hidden{pointer-events:none;opacity:0;transition:opacity .5s ease;}
+.splash-logo{font-size:4rem;margin-bottom:12px;animation:float 2.5s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.splash-title{font-family:'Syne',sans-serif;font-size:clamp(2rem,6vw,3.2rem);font-weight:800;letter-spacing:-1px;color:var(--text);margin-bottom:8px;text-align:center;}
+.splash-title span{color:var(--accent);}
+.splash-sub{color:var(--muted);font-size:0.9rem;text-align:center;max-width:400px;line-height:1.7;margin-bottom:28px;}
+.splash-steps{display:flex;flex-direction:column;gap:10px;width:100%;max-width:360px;margin-bottom:28px;}
+.splash-step{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 16px;display:flex;align-items:center;gap:14px;font-size:0.82rem;color:var(--text);animation:slide-up .4s ease both;}
+@keyframes slide-up{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+.splash-step:nth-child(1){animation-delay:.1s;}
+.splash-step:nth-child(2){animation-delay:.22s;}
+.splash-step:nth-child(3){animation-delay:.34s;}
+.splash-step:nth-child(4){animation-delay:.46s;}
+.splash-step-icon{font-size:1.4rem;flex-shrink:0;}
+.splash-step-text strong{display:block;color:var(--accent);font-family:'Syne',sans-serif;font-size:0.8rem;font-weight:700;margin-bottom:2px;}
+.splash-btn{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;padding:14px 40px;border-radius:12px;font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;cursor:pointer;letter-spacing:0.04em;transition:all .25s;box-shadow:0 0 30px rgba(0,229,255,0.25);}
+.splash-btn:hover{transform:scale(1.04);box-shadow:0 0 50px rgba(0,229,255,0.4);}
+.splash-skip{margin-top:12px;font-size:0.72rem;color:var(--muted);cursor:pointer;text-decoration:underline;background:none;border:none;}
+.splash-skip:hover{color:var(--text);}
+
+/* ══════════════════════════════════════════════
+   TUTORIAL TOOLTIP
+══════════════════════════════════════════════ */
+.tutorial-tip{position:absolute;background:var(--surface);border:1px solid var(--accent);border-radius:12px;padding:12px 16px;font-size:0.78rem;color:var(--text);max-width:240px;z-index:400;box-shadow:0 8px 30px var(--shadow);animation:tip-in .25s ease;}
+@keyframes tip-in{from{opacity:0;transform:scale(0.9);}to{opacity:1;transform:scale(1);}}
+.tutorial-tip::before{content:'';position:absolute;top:-6px;left:24px;width:10px;height:10px;background:var(--surface);border-left:1px solid var(--accent);border-top:1px solid var(--accent);transform:rotate(45deg);}
+.tutorial-tip strong{color:var(--accent);display:block;margin-bottom:4px;font-family:'Syne',sans-serif;}
+.tutorial-tip .tip-btns{display:flex;gap:8px;margin-top:10px;}
+.tip-btn{padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'DM Mono',monospace;font-size:0.7rem;cursor:pointer;transition:all .2s;}
+.tip-btn.tip-next{border-color:var(--accent);color:var(--accent);}
+.tip-btn:hover{color:var(--text);}
+.tutorial-progress{font-size:0.62rem;color:var(--muted);margin-top:6px;}
+
+/* ══════════════════════════════════════════════
+   HEADER
+══════════════════════════════════════════════ */
+header{padding:22px 0 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.logo{display:flex;align-items:center;gap:11px;}
+.logo-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;box-shadow:0 0 18px rgba(0,229,255,0.25);flex-shrink:0;}
+.logo-text{font-family:'Syne',sans-serif;font-weight:800;font-size:1.35rem;letter-spacing:-.5px;}
+.logo-text span{color:var(--accent);}
+.header-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.badge{font-size:0.6rem;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:var(--green);padding:3px 9px;border-radius:20px;letter-spacing:.08em;text-transform:uppercase;}
+.icon-btn{width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .2s;color:var(--text);}
+.icon-btn:hover,.icon-btn:focus-visible{border-color:var(--accent);transform:scale(1.1);outline:none;}
+.hc-btn{padding:4px 11px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted);transition:all .2s;}
+.hc-btn:hover,.hc-btn.active{border-color:var(--accent3);color:var(--accent3);}
+
+/* ══════════════════════════════════════════════
+   INSTALL BANNER
+══════════════════════════════════════════════ */
+.install-banner{background:linear-gradient(135deg,rgba(0,229,255,0.07),rgba(124,58,237,0.07));border:1px solid rgba(0,229,255,0.18);border-radius:12px;padding:11px 16px;display:none;align-items:center;gap:12px;margin-bottom:18px;font-size:0.78rem;color:var(--text);}
+.install-banner.visible{display:flex;}
+.install-banner strong{color:var(--accent);}
+.install-banner .ib-btns{display:flex;gap:8px;margin-left:auto;flex-shrink:0;}
+
+/* ══════════════════════════════════════════════
+   OFFLINE NOTICE
+══════════════════════════════════════════════ */
+.offline-notice{background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:10px;padding:9px 14px;font-size:0.74rem;color:var(--accent3);display:none;align-items:center;gap:9px;margin-bottom:16px;}
+.offline-notice.visible{display:flex;}
+
+/* ══════════════════════════════════════════════
+   HERO
+══════════════════════════════════════════════ */
+.hero{text-align:center;padding:28px 0 20px;}
+.hero h1{font-family:'Syne',sans-serif;font-size:clamp(1.85rem,5vw,3rem);font-weight:800;line-height:1.1;letter-spacing:-1.5px;margin-bottom:10px;}
+.hero h1 .hl{color:var(--accent);text-shadow:0 0 28px rgba(0,229,255,0.4);}
+.hero p{color:var(--muted);font-size:0.88rem;max-width:500px;margin:0 auto;line-height:1.7;}
+
+/* ══════════════════════════════════════════════
+   LANG BAR
+══════════════════════════════════════════════ */
+.lang-bar{display:flex;justify-content:center;gap:7px;margin:18px 0;flex-wrap:wrap;}
+.lang-btn{padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:'DM Mono',monospace;font-size:0.74rem;cursor:pointer;transition:all .2s;}
+.lang-btn:hover,.lang-btn:focus-visible{border-color:var(--accent);color:var(--accent);outline:none;}
+.lang-btn.active{background:rgba(0,229,255,0.1);border-color:var(--accent);color:var(--accent);}
+
+/* ══════════════════════════════════════════════
+   PHASE BANNER
+══════════════════════════════════════════════ */
+.phase-banner{background:linear-gradient(135deg,rgba(16,185,129,0.08),rgba(0,229,255,0.06));border:1px solid rgba(16,185,129,0.2);border-radius:12px;padding:11px 16px;display:flex;align-items:center;gap:12px;margin-bottom:18px;font-size:0.76rem;color:var(--muted);line-height:1.5;}
+.phase-banner strong{color:var(--green);font-weight:600;}
+
+/* ══════════════════════════════════════════════
+   APP CARD
+══════════════════════════════════════════════ */
+.app-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:24px 28px;box-shadow:var(--glow);margin-bottom:18px;transition:background .3s;}
+
+/* ══════════════════════════════════════════════
+   MIC
+══════════════════════════════════════════════ */
+.mic-section{display:flex;flex-direction:column;align-items:center;gap:13px;margin-bottom:24px;position:relative;}
+.mic-btn{width:82px;height:82px;border-radius:50%;border:2px solid var(--accent);background:rgba(0,229,255,0.06);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:32px;transition:all .3s;box-shadow:0 0 26px rgba(0,229,255,0.1);}
+.mic-btn:hover,.mic-btn:focus-visible{background:rgba(0,229,255,0.12);box-shadow:0 0 46px rgba(0,229,255,0.25);transform:scale(1.05);outline:2px solid var(--accent);outline-offset:4px;}
+.mic-btn.listening{border-color:var(--red);background:rgba(239,68,68,0.1);animation:pulse-ring 1.4s ease infinite;}
+@keyframes pulse-ring{0%{box-shadow:0 0 0 0 rgba(239,68,68,0.45)}70%{box-shadow:0 0 0 22px rgba(239,68,68,0)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}
+.mic-status{font-size:0.72rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;text-align:center;transition:color .3s;}
+.mic-status.active{color:var(--red);}
+.mic-shortcut{font-size:0.58rem;color:var(--muted);opacity:0.5;letter-spacing:.06em;}
+
+/* ══════════════════════════════════════════════
+   TRANSCRIPT
+══════════════════════════════════════════════ */
+.transcript-box{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:15px;min-height:62px;margin-bottom:18px;}
+.tlabel{font-size:0.59rem;color:var(--accent);letter-spacing:.12em;text-transform:uppercase;margin-bottom:7px;display:flex;justify-content:space-between;}
+.ttext{font-size:0.91rem;line-height:1.7;color:var(--text);}
+.ttext.empty{color:var(--muted);font-style:italic;}
+.cursor{display:inline-block;width:2px;height:1em;background:var(--accent);margin-left:2px;vertical-align:middle;animation:blink 1s step-end infinite;border-radius:1px;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* ══════════════════════════════════════════════
+   GRAMMAR PANEL
+══════════════════════════════════════════════ */
+.grammar-panel{background:var(--surface3);border:1px solid rgba(124,58,237,0.2);border-radius:12px;padding:12px 15px;margin-bottom:18px;display:none;}
+.grammar-panel.visible{display:block;}
+.grammar-label{font-size:0.59rem;color:var(--accent2);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;}
+.grammar-row{display:flex;align-items:center;flex-wrap:wrap;gap:5px;}
+.grammar-token{padding:4px 10px;border-radius:20px;font-size:0.68rem;font-family:'Syne',sans-serif;font-weight:700;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;}
+.gt-topic{background:rgba(0,229,255,0.12);border:1px solid rgba(0,229,255,0.3);color:var(--accent);}
+.gt-time{background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);color:var(--accent3);}
+.gt-subject{background:rgba(124,58,237,0.12);border:1px solid rgba(124,58,237,0.3);color:#c084fc;}
+.gt-verb{background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);color:var(--green);}
+.gt-object{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#fca5a5;}
+.gt-question{background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.3);color:#fde68a;}
+.gt-negation{background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:var(--red);}
+.grammar-arrow{color:var(--muted);font-size:0.85rem;}
+.grammar-note{font-size:0.64rem;color:var(--muted);margin-top:7px;line-height:1.5;}
+.grammar-note span{color:var(--accent2);}
+
+/* ══════════════════════════════════════════════
+   PLAYBACK BAR
+══════════════════════════════════════════════ */
+.playback-bar{background:var(--surface3);border:1px solid rgba(0,229,255,0.14);border-radius:12px;padding:11px 15px;margin-bottom:18px;display:none;align-items:center;gap:10px;flex-wrap:wrap;}
+.playback-bar.visible{display:flex;}
+.playback-info{font-size:0.7rem;color:var(--muted);flex:1;}
+.playback-info strong{color:var(--accent);font-family:'Syne',sans-serif;}
+.pb-btn{padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'DM Mono',monospace;font-size:0.7rem;cursor:pointer;transition:all .2s;}
+.pb-btn:hover,.pb-btn:focus-visible{border-color:var(--accent);color:var(--accent);outline:none;}
+.pb-btn.pb-active{background:rgba(0,229,255,0.1);border-color:var(--accent);color:var(--accent);}
+.pb-track{height:3px;background:var(--border);border-radius:2px;flex-basis:100%;margin-top:2px;}
+.pb-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .35s ease;}
+
+/* ══════════════════════════════════════════════
+   SIGNS OUTPUT
+══════════════════════════════════════════════ */
+.signs-label{font-size:0.59rem;color:var(--accent);letter-spacing:.12em;text-transform:uppercase;margin-bottom:11px;display:flex;align-items:center;gap:8px;}
+.signs-label::after{content:'';flex:1;height:1px;background:var(--border);}
+.signs-output{display:flex;flex-direction:column;gap:18px;min-height:110px;}
+.sentence-block{display:flex;flex-direction:column;gap:8px;}
+.sentence-meta{font-size:0.59rem;color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.sentence-meta .lang-tag{color:var(--accent2);font-weight:700;}
+.sentence-meta .original{font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:320px;}
+.signs-row{display:flex;flex-wrap:wrap;gap:9px;align-items:flex-start;}
+
+/* ══════════════════════════════════════════════
+   SIGN CARD
+══════════════════════════════════════════════ */
+.sign-card{background:var(--card-bg);border:1px solid var(--border);border-radius:13px;padding:10px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:border-color .25s,transform .25s,box-shadow .25s;animation:pop-in .3s cubic-bezier(0.175,.885,.32,1.275);cursor:pointer;position:relative;outline-offset:3px;}
+.sign-card:focus-visible{outline:2px solid var(--accent);}
+@keyframes pop-in{from{opacity:0;transform:scale(.72) translateY(8px);}to{opacity:1;transform:scale(1) translateY(0);}}
+.sign-card:hover{border-color:rgba(0,229,255,0.35);background:rgba(0,229,255,0.04);transform:translateY(-3px);box-shadow:0 8px 22px var(--shadow);}
+.sign-card.playback-active{border-color:var(--accent);background:rgba(0,229,255,0.08);box-shadow:0 0 22px rgba(0,229,255,0.22);transform:scale(1.06);}
+.sign-card svg{width:78px;height:78px;}
+.fspell-row{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;}
+.fspell-row svg{width:32px;height:32px;}
+.sign-word{font-family:'Syne',sans-serif;font-size:0.67rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.07em;text-align:center;}
+.sign-lang-tag{font-size:0.53rem;color:var(--muted);}
+.sign-role-badge{position:absolute;top:-7px;left:50%;transform:translateX(-50%);font-size:0.49rem;padding:2px 7px;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;letter-spacing:.06em;white-space:nowrap;}
+.role-topic{background:rgba(0,229,255,0.15);color:var(--accent);border:1px solid rgba(0,229,255,0.3);}
+.role-time{background:rgba(245,158,11,0.15);color:var(--accent3);border:1px solid rgba(245,158,11,0.3);}
+.role-subject{background:rgba(124,58,237,0.15);color:#c084fc;border:1px solid rgba(124,58,237,0.3);}
+.role-verb{background:rgba(16,185,129,0.15);color:var(--green);border:1px solid rgba(16,185,129,0.3);}
+.role-object{background:rgba(239,68,68,0.1);color:#fca5a5;border:1px solid rgba(239,68,68,0.2);}
+.role-question{background:rgba(251,191,36,0.12);color:#fde68a;border:1px solid rgba(251,191,36,0.25);}
+.role-negation{background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.25);}
+
+/* Motion animation dots */
+.sign-motion-anim{position:absolute;bottom:38px;left:50%;transform:translateX(-50%);pointer-events:none;opacity:0;transition:opacity .2s;}
+.sign-card:hover .sign-motion-anim,.sign-card.playback-active .sign-motion-anim{opacity:1;}
+.motion-dot{width:7px;height:7px;border-radius:50%;background:var(--accent3);position:absolute;}
+@keyframes move-up{0%{opacity:.8;transform:translateY(0)}100%{opacity:0;transform:translateY(-22px)}}
+@keyframes move-down{0%{opacity:.8;transform:translateY(0)}100%{opacity:0;transform:translateY(22px)}}
+@keyframes move-right{0%{opacity:.8;transform:translateX(0)}100%{opacity:0;transform:translateX(22px)}}
+@keyframes move-left{0%{opacity:.8;transform:translateX(0)}100%{opacity:0;transform:translateX(-22px)}}
+@keyframes move-circle{0%{opacity:.8;transform:rotate(0deg) translateX(14px) rotate(0deg)}100%{opacity:.8;transform:rotate(360deg) translateX(14px) rotate(-360deg)}}
+@keyframes move-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+@keyframes move-nod{0%,100%{transform:translateY(0)}40%{transform:translateY(-8px)}60%{transform:translateY(8px)}}
+@keyframes move-pulse{0%,100%{opacity:.8;transform:scale(1)}50%{opacity:.3;transform:scale(1.7)}}
+
+.flow-arrow{color:var(--muted);font-size:1.05rem;align-self:center;flex-shrink:0;}
+.phrase-break{width:100%;display:flex;align-items:center;gap:9px;margin:3px 0;}
+.phrase-break-line{flex:1;height:1px;background:rgba(124,58,237,0.15);}
+.phrase-break-label{font-size:0.54rem;color:var(--accent2);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;}
+.empty-state{width:100%;text-align:center;color:var(--muted);font-size:0.8rem;padding:26px;line-height:1.9;}
+.empty-state .icon{font-size:2rem;margin-bottom:5px;}
+
+/* ══════════════════════════════════════════════
+   CONTROLS
+══════════════════════════════════════════════ */
+.controls{display:flex;gap:7px;margin-top:18px;flex-wrap:wrap;align-items:center;}
+.btn{padding:8px 15px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'DM Mono',monospace;font-size:0.72rem;cursor:pointer;transition:all .2s;letter-spacing:.04em;}
+.btn:hover,.btn:focus-visible{color:var(--text);border-color:rgba(255,255,255,0.2);outline:none;}
+.btn-primary{background:linear-gradient(135deg,rgba(0,229,255,0.15),rgba(124,58,237,0.15));border-color:rgba(0,229,255,0.3);color:var(--accent);}
+.btn-primary:hover{background:linear-gradient(135deg,rgba(0,229,255,0.22),rgba(124,58,237,0.22));}
+.btn-green{border-color:rgba(16,185,129,0.3);color:var(--green);}
+.btn-green:hover{background:rgba(16,185,129,0.07);}
+.btn-yellow{border-color:rgba(245,158,11,0.3);color:var(--accent3);}
+.btn-yellow:hover{background:rgba(245,158,11,0.07);}
+.btn-share{border-color:rgba(124,58,237,0.3);color:var(--accent2);}
+.btn-share:hover{background:rgba(124,58,237,0.07);}
+.speed-control{display:flex;align-items:center;gap:6px;margin-left:auto;color:var(--muted);font-size:0.7rem;}
+.speed-control input{width:68px;accent-color:var(--accent);}
+#typeBox{display:none;margin-top:11px;}
+#typeInput{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.86rem;padding:10px 13px;outline:none;transition:border-color .2s;}
+#typeInput:focus{border-color:rgba(0,229,255,0.4);}
+
+/* ══════════════════════════════════════════════
+   STATS PANEL
+══════════════════════════════════════════════ */
+.stats-panel{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:20px 24px;margin-bottom:18px;display:none;}
+.stats-panel.visible{display:block;}
+.stats-panel h2{font-family:'Syne',sans-serif;font-size:0.9rem;font-weight:700;margin-bottom:14px;}
+.stats-panel h2 span{color:var(--accent);}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;}
+.stat-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;text-align:center;}
+.stat-value{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:var(--accent);line-height:1;}
+.stat-label{font-size:0.62rem;color:var(--muted);margin-top:4px;letter-spacing:.06em;text-transform:uppercase;}
+.stat-card.green .stat-value{color:var(--green);}
+.stat-card.yellow .stat-value{color:var(--accent3);}
+.stat-card.purple .stat-value{color:var(--accent2);}
+
+/* ══════════════════════════════════════════════
+   HISTORY
+══════════════════════════════════════════════ */
+.history-panel{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:20px 24px;margin-bottom:18px;display:none;}
+.history-panel h2{font-family:'Syne',sans-serif;font-size:0.9rem;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.history-panel h2 span{color:var(--accent);}
+.history-list{display:flex;flex-direction:column;gap:8px;max-height:230px;overflow-y:auto;}
+.history-list::-webkit-scrollbar{width:4px;}
+.history-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.history-item{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;cursor:pointer;transition:all .2s;}
+.history-item:hover,.history-item:focus-visible{border-color:rgba(0,229,255,0.22);outline:none;}
+.history-original{font-size:0.78rem;color:var(--text);margin-bottom:3px;}
+.history-signed{font-size:0.66rem;color:var(--accent);font-family:'Syne',sans-serif;font-weight:700;letter-spacing:.04em;}
+.history-meta{font-size:0.58rem;color:var(--muted);margin-top:3px;}
+.history-empty{color:var(--muted);font-size:0.75rem;text-align:center;padding:12px;}
+.btn-sm{padding:3px 10px;font-size:0.63rem;margin-left:auto;}
+
+/* ══════════════════════════════════════════════
+   ALPHABET
+══════════════════════════════════════════════ */
+.alpha-panel{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:20px 24px;margin-bottom:20px;}
+.alpha-panel h2{font-family:'Syne',sans-serif;font-size:0.9rem;font-weight:700;margin-bottom:13px;}
+.alpha-panel h2 span{color:var(--accent);}
+.alpha-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(62px,1fr));gap:7px;}
+.alpha-tile{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:6px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;transition:all .2s;}
+.alpha-tile:hover,.alpha-tile:focus-visible{border-color:rgba(0,229,255,0.3);transform:scale(1.06);outline:none;}
+.alpha-tile svg{width:47px;height:47px;}
+.alpha-tile-letter{font-family:'Syne',sans-serif;font-size:0.64rem;font-weight:800;color:var(--accent);}
+
+/* ══════════════════════════════════════════════
+   MY VOICE PANEL
+══════════════════════════════════════════════ */
+.myvoice-panel{background:var(--surface);border:2px solid rgba(124,58,237,0.35);border-radius:20px;padding:24px 28px;margin-bottom:18px;position:relative;overflow:hidden;}
+.myvoice-panel::before{content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;background:radial-gradient(circle,rgba(124,58,237,0.12) 0%,transparent 70%);pointer-events:none;}
+.myvoice-header{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
+.myvoice-header h2{font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;color:var(--text);display:flex;align-items:center;gap:8px;}
+.myvoice-header h2 .mv-icon{font-size:1.3rem;}
+.myvoice-tagline{font-size:0.72rem;color:var(--muted);line-height:1.6;margin-bottom:20px;}
+.myvoice-tagline strong{color:var(--accent2);}
+
+/* Voice profile status */
+.voice-profile-status{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:18px;display:flex;align-items:center;gap:12px;}
+.vp-dot{width:10px;height:10px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background .3s;}
+.vp-dot.active{background:var(--green);box-shadow:0 0 8px rgba(16,185,129,0.5);animation:vp-pulse 2s ease infinite;}
+.vp-dot.recording{background:var(--red);box-shadow:0 0 8px rgba(239,68,68,0.5);animation:vp-pulse 0.8s ease infinite;}
+@keyframes vp-pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.vp-status-text{flex:1;font-size:0.76rem;color:var(--text);}
+.vp-status-text small{display:block;font-size:0.62rem;color:var(--muted);margin-top:2px;}
+.vp-profile-name{font-family:'Syne',sans-serif;font-weight:700;color:var(--accent2);}
+
+/* Steps */
+.mv-steps{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;}
+@media(max-width:560px){.mv-steps{grid-template-columns:1fr;}}
+.mv-step{background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px;position:relative;}
+.mv-step.completed{border-color:rgba(16,185,129,0.3);}
+.mv-step.completed::after{content:'✓';position:absolute;top:10px;right:12px;font-size:0.75rem;color:var(--green);font-weight:700;}
+.mv-step-num{font-size:0.58rem;color:var(--accent2);letter-spacing:.1em;text-transform:uppercase;font-family:'Syne',sans-serif;font-weight:700;}
+.mv-step-title{font-family:'Syne',sans-serif;font-size:0.82rem;font-weight:700;color:var(--text);}
+.mv-step-desc{font-size:0.68rem;color:var(--muted);line-height:1.5;}
+
+/* Record button */
+.mv-record-btn{width:64px;height:64px;border-radius:50%;border:2px solid var(--accent2);background:rgba(124,58,237,0.08);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:26px;transition:all .3s;margin:0 auto;}
+.mv-record-btn:hover{background:rgba(124,58,237,0.16);transform:scale(1.06);}
+.mv-record-btn.recording{border-color:var(--red);background:rgba(239,68,68,0.1);animation:pulse-ring-red 1.2s ease infinite;}
+@keyframes pulse-ring-red{0%{box-shadow:0 0 0 0 rgba(239,68,68,0.45)}70%{box-shadow:0 0 0 16px rgba(239,68,68,0)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}
+.mv-record-label{font-size:0.63rem;color:var(--muted);text-align:center;letter-spacing:.06em;text-transform:uppercase;}
+.mv-record-timer{font-size:0.75rem;color:var(--red);text-align:center;font-family:'Syne',sans-serif;font-weight:700;min-height:18px;}
+
+/* Waveform visualiser */
+.mv-waveform{height:48px;background:var(--surface3);border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:2px;padding:0 8px;}
+.mv-bar{width:3px;background:var(--accent2);border-radius:2px;transition:height .08s ease;height:4px;opacity:.7;}
+
+/* Pitch analysis */
+.pitch-display{background:var(--surface3);border-radius:12px;padding:12px 14px;display:none;}
+.pitch-display.visible{display:block;}
+.pitch-label{font-size:0.6rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;}
+.pitch-bars{display:flex;gap:6px;align-items:flex-end;height:36px;margin-bottom:8px;}
+.pitch-bar{flex:1;background:linear-gradient(to top,var(--accent2),var(--accent));border-radius:3px;transition:height .3s ease;min-height:4px;}
+.pitch-stats{display:flex;gap:12px;flex-wrap:wrap;}
+.pitch-stat{font-size:0.65rem;color:var(--muted);}
+.pitch-stat strong{color:var(--text);display:block;font-family:'Syne',sans-serif;font-size:0.78rem;font-weight:700;}
+
+/* Voice style selector */
+.voice-style-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+@media(max-width:480px){.voice-style-grid{grid-template-columns:repeat(2,1fr);}}
+.voice-style-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 8px;text-align:center;cursor:pointer;transition:all .2s;}
+.voice-style-card:hover,.voice-style-card.selected{border-color:var(--accent2);background:rgba(124,58,237,0.08);}
+.voice-style-card.selected{box-shadow:0 0 14px rgba(124,58,237,0.2);}
+.vs-emoji{font-size:1.4rem;margin-bottom:4px;}
+.vs-name{font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:700;color:var(--text);}
+.vs-desc{font-size:0.58rem;color:var(--muted);margin-top:2px;}
+
+/* Speak output area */
+.mv-speak-area{background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px;}
+.mv-speak-label{font-size:0.6rem;color:var(--accent2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;}
+.mv-speak-input{width:100%;background:transparent;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:1rem;line-height:1.6;outline:none;resize:none;min-height:60px;}
+.mv-speak-input::placeholder{color:var(--muted);font-style:italic;}
+
+/* Big speak button */
+.mv-speak-btn{width:100%;padding:16px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--accent2),#9333ea);color:#fff;font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;cursor:pointer;transition:all .3s;letter-spacing:.03em;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 20px rgba(124,58,237,0.3);}
+.mv-speak-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(124,58,237,0.45);}
+.mv-speak-btn:active{transform:scale(.98);}
+.mv-speak-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.mv-speak-btn.speaking{background:linear-gradient(135deg,var(--green),#059669);box-shadow:0 4px 20px rgba(16,185,129,0.35);animation:speak-pulse .6s ease infinite alternate;}
+@keyframes speak-pulse{from{box-shadow:0 4px 20px rgba(16,185,129,0.3);}to{box-shadow:0 4px 40px rgba(16,185,129,0.6);}}
+
+/* Speaking wave animation */
+.speaking-wave{display:none;align-items:center;justify-content:center;gap:3px;margin-top:10px;height:24px;}
+.speaking-wave.active{display:flex;}
+.sw-bar{width:4px;border-radius:2px;background:var(--accent2);animation:sw-anim 0.8s ease-in-out infinite;}
+.sw-bar:nth-child(1){animation-delay:0s;}
+.sw-bar:nth-child(2){animation-delay:.1s;}
+.sw-bar:nth-child(3){animation-delay:.2s;}
+.sw-bar:nth-child(4){animation-delay:.3s;}
+.sw-bar:nth-child(5){animation-delay:.4s;}
+@keyframes sw-anim{0%,100%{height:4px;opacity:.4}50%{height:20px;opacity:1}}
+
+/* Use last signed sentence */
+.mv-autofill-tip{font-size:0.65rem;color:var(--muted);text-align:center;margin-top:6px;}
+.mv-autofill-tip a{color:var(--accent2);cursor:pointer;text-decoration:underline;}
+
+/* ══════════════════════════════════════════════
+   FOOTER
+══════════════════════════════════════════════ */
+footer{text-align:center;padding:24px 0 32px;font-size:0.68rem;color:var(--muted);line-height:1.9;}
+footer a{color:var(--accent);text-decoration:none;}
+footer a:hover{text-decoration:underline;}
+.footer-badges{display:flex;justify-content:center;gap:10px;margin-top:10px;flex-wrap:wrap;}
+.footer-badge{padding:4px 12px;border-radius:20px;border:1px solid var(--border);font-size:0.6rem;color:var(--muted);letter-spacing:.06em;}
+
+/* ══════════════════════════════════════════════
+   MODAL
+══════════════════════════════════════════════ */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);z-index:200;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:24px;max-width:440px;width:100%;box-shadow:0 0 60px var(--shadow);animation:modal-in .27s ease;position:relative;max-height:90vh;overflow-y:auto;}
+@keyframes modal-in{from{opacity:0;transform:scale(.9) translateY(16px);}to{opacity:1;transform:scale(1) translateY(0);}}
+.modal-close{position:absolute;top:12px;right:12px;background:transparent;border:none;color:var(--muted);font-size:1rem;cursor:pointer;transition:color .2s;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:50%;}
+.modal-close:hover,.modal-close:focus-visible{color:var(--text);background:var(--surface2);outline:none;}
+.modal-diagram{display:flex;justify-content:center;flex-wrap:wrap;gap:7px;margin:11px 0;}
+.modal-diagram svg{width:135px;height:135px;}
+.modal h3{font-family:'Syne',sans-serif;font-size:1.25rem;font-weight:800;color:var(--accent);text-align:center;}
+.modal-type{text-align:center;font-size:0.65rem;color:var(--muted);margin-bottom:9px;text-transform:uppercase;letter-spacing:.1em;}
+.modal-desc{font-size:0.8rem;color:var(--text);line-height:1.7;text-align:center;margin-bottom:9px;}
+.modal-motion{background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:9px 12px;text-align:center;font-size:0.75rem;color:var(--accent3);line-height:1.6;}
+.modal-motion-label{font-size:0.57rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:2px;opacity:.7;}
+.modal-anim-preview{height:36px;display:flex;align-items:center;justify-content:center;margin:7px 0;position:relative;}
+.modal-anim-dot{width:10px;height:10px;border-radius:50%;background:var(--accent3);position:absolute;}
+
+/* ══════════════════════════════════════════════
+   EXPORT MODAL EXTRAS
+══════════════════════════════════════════════ */
+.export-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
+.export-option{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;transition:all .2s;text-align:center;}
+.export-option:hover{border-color:var(--accent);transform:translateY(-2px);}
+.export-option .eo-icon{font-size:1.8rem;margin-bottom:6px;}
+.export-option .eo-title{font-family:'Syne',sans-serif;font-size:0.78rem;font-weight:700;color:var(--text);margin-bottom:3px;}
+.export-option .eo-desc{font-size:0.62rem;color:var(--muted);}
+
+/* ══════════════════════════════════════════════
+   TOAST & LIVE REGION
+══════════════════════════════════════════════ */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:9px 18px;font-size:0.75rem;color:var(--text);box-shadow:0 4px 18px var(--shadow);opacity:0;transition:all .28s;z-index:300;white-space:nowrap;max-width:90vw;text-overflow:ellipsis;overflow:hidden;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.success{border-color:rgba(16,185,129,0.3);color:var(--green);}
+.toast.error{border-color:rgba(239,68,68,0.3);color:var(--red);}
+.sr-live{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;}
+
+/* ══════════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════════ */
+@media(max-width:640px){
+  .app-card{padding:16px 14px;}
+  .hero h1{font-size:1.75rem;}
+  .speed-control{display:none;}
+  .alpha-grid{grid-template-columns:repeat(auto-fill,minmax(52px,1fr));}
+  .sign-card svg{width:68px;height:68px;}
+  .export-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<a href="#main-input" class="skip-link">Skip to main content</a>
+<div class="sr-live" aria-live="polite" aria-atomic="true" id="srLive"></div>
+<div class="toast" id="toast" role="status"></div>
+
+<!-- ══ ONBOARDING SPLASH ══ -->
+<div class="splash" id="splash" role="dialog" aria-modal="true" aria-label="Welcome to SignBridge">
+  <div class="splash-logo" aria-hidden="true">🤟</div>
+  <div class="splash-title">Sign<span>Bridge</span></div>
+  <div class="splash-sub">Speech to sign language — right in your browser, free forever, no install required.</div>
+  <div class="splash-steps">
+    <div class="splash-step">
+      <div class="splash-step-icon" aria-hidden="true">🎤</div>
+      <div class="splash-step-text"><strong>Speak or type</strong>Say anything naturally in English</div>
+    </div>
+    <div class="splash-step">
+      <div class="splash-step-icon" aria-hidden="true">🧠</div>
+      <div class="splash-step-text"><strong>Grammar engine</strong>Sentence reordered into sign language structure</div>
+    </div>
+    <div class="splash-step">
+      <div class="splash-step-icon" aria-hidden="true">🤲</div>
+      <div class="splash-step-text"><strong>Illustrated signs</strong>Hand diagrams with animated motion guides</div>
+    </div>
+    <div class="splash-step">
+      <div class="splash-step-icon" aria-hidden="true">🌍</div>
+      <div class="splash-step-text"><strong>6 sign languages</strong>ASL, BSL, Auslan, LSF, DGS, ISL</div>
+    </div>
+  </div>
+  <button class="splash-btn" id="splashStart">Get Started →</button>
+  <button class="splash-skip" id="splashSkip">Skip intro</button>
+</div>
+
+<div class="container">
+  <!-- ══ HEADER ══ -->
+  <header role="banner">
+    <div class="logo">
+      <div class="logo-icon" aria-hidden="true">🤟</div>
+      <div class="logo-text" aria-label="SignBridge">Sign<span>Bridge</span></div>
+    </div>
+    <div class="header-right">
+      <div class="badge">v5.0 · Final</div>
+      <button class="btn btn-sm btn-share" id="tutorialBtn" style="font-size:0.63rem;padding:4px 10px;" title="Start tutorial">🎓 Tutorial</button>
+      <button class="hc-btn" id="hcBtn" aria-pressed="false" title="Toggle high contrast">⬛ HC</button>
+      <button class="icon-btn" id="themeBtn" aria-label="Toggle theme" title="Toggle light/dark theme">🌙</button>
+    </div>
+  </header>
+
+  <main id="main-input">
+
+    <!-- Install banner -->
+    <div class="install-banner" id="installBanner" role="banner">
+      <span>📲 <strong>Install SignBridge</strong> — add to home screen for offline use</span>
+      <div class="ib-btns">
+        <button class="btn btn-sm btn-primary" id="installBtn">Install</button>
+        <button class="btn btn-sm" id="installDismiss">✕</button>
+      </div>
+    </div>
+
+    <!-- Offline notice -->
+    <div class="offline-notice" id="offlineNotice" role="alert">
+      <span>📡</span> You're offline — SignBridge still works fully using its built-in dictionary.
+    </div>
+
+    <!-- Hero -->
+    <div class="hero">
+      <h1>Speak it.<br><span class="hl">Sign it right.</span></h1>
+      <p>Grammar-aware, illustrated, accessible sign language translation. Supports ASL, BSL, Auslan, LSF, DGS and ISL.</p>
+    </div>
+
+    <!-- Lang bar -->
+    <div class="lang-bar" role="group" aria-label="Select sign language">
+      <button class="lang-btn active" data-lang="ASL" aria-pressed="true">🇺🇸 ASL</button>
+      <button class="lang-btn" data-lang="BSL" aria-pressed="false">🇬🇧 BSL</button>
+      <button class="lang-btn" data-lang="Auslan" aria-pressed="false">🇦🇺 Auslan</button>
+      <button class="lang-btn" data-lang="LSF" aria-pressed="false">🇫🇷 LSF</button>
+      <button class="lang-btn" data-lang="DGS" aria-pressed="false">🇩🇪 DGS</button>
+      <button class="lang-btn" data-lang="ISL" aria-pressed="false">🇮🇳 ISL</button>
+    </div>
+
+    <div class="phase-banner" role="note">
+      <strong>✅ SignBridge v5.0</strong> — Installable PWA · Offline-ready · Export · Share links · Tutorial · Stats · Full accessibility · Production ready
+    </div>
+
+    <!-- App card -->
+    <div class="app-card" id="appCard">
+      <div class="mic-section" id="micSection">
+        <button class="mic-btn" id="micBtn" aria-label="Start recording" aria-pressed="false">🎤</button>
+        <div class="mic-status" id="micStatus" aria-live="polite">click microphone to start speaking</div>
+        <div class="mic-shortcut" aria-hidden="true">Spacebar shortcut</div>
+      </div>
+
+      <div class="transcript-box" role="region" aria-label="Transcript">
+        <div class="tlabel"><span>↳ You said</span><span id="wordCount" aria-live="polite"></span></div>
+        <div class="ttext empty" id="ttext" aria-live="polite">Your speech will appear here...<span class="cursor" aria-hidden="true"></span></div>
+      </div>
+
+      <div class="grammar-panel" id="grammarPanel" role="region" aria-label="Grammar reorder">
+        <div class="grammar-label">🔀 Sign this sequence:</div>
+        <div class="grammar-row" id="grammarRow"></div>
+        <div class="grammar-note" id="grammarNote"></div>
+      </div>
+
+      <div class="playback-bar" id="playbackBar" role="region" aria-label="Playback">
+        <div class="playback-info">Now signing: <strong id="pbWord">—</strong> <span id="pbCount" style="color:var(--muted)"></span></div>
+        <button class="pb-btn" id="pbPrev" aria-label="Previous">◀</button>
+        <button class="pb-btn pb-active" id="pbPlayPause" aria-label="Auto play">▶ Auto</button>
+        <button class="pb-btn" id="pbNext" aria-label="Next">▶</button>
+        <button class="pb-btn" id="pbStop" aria-label="Stop">✕</button>
+        <div class="pb-track"><div class="pb-fill" id="pbFill" style="width:0%"></div></div>
+      </div>
+
+      <div class="signs-label">Sign output</div>
+      <div class="signs-output" id="signsOutput" role="region" aria-label="Sign output" aria-live="polite">
+        <div class="empty-state">
+          <div class="icon" aria-hidden="true">🤲</div>
+          Speak or type a sentence to begin —<br>SignBridge parses grammar and shows signs in the correct sequence
+        </div>
+      </div>
+
+      <div class="controls" role="toolbar" aria-label="Controls">
+        <button class="btn btn-primary" id="clearBtn" aria-label="Clear">✕ Clear</button>
+        <button class="btn" id="typeBtn" aria-expanded="false">⌨ Type</button>
+        <button class="btn btn-yellow" id="playbackBtn" aria-label="Playback">▶ Play</button>
+        <button class="btn btn-green" id="ttsBtn" aria-label="Read aloud">🔊 Read</button>
+        <button class="btn btn-share" id="shareBtn" aria-label="Share or export">↑ Share</button>
+        <button class="btn" id="statsBtn">📊 Stats</button>
+        <button class="btn" id="historyToggleBtn">📋 History</button>
+        <div class="speed-control" aria-label="Speed">
+          🐢<input type="range" id="speedSlider" min="0.5" max="2" step="0.1" value="1" aria-label="Speed">🐇
+          <span id="speedVal" aria-live="polite">1×</span>
+        </div>
+      </div>
+      <div id="typeBox">
+        <input type="text" id="typeInput" placeholder="Type sentence and press Enter..." aria-label="Type a sentence">
+      </div>
+    </div>
+
+    <!-- Stats panel -->
+    <div class="stats-panel" id="statsPanel">
+      <h2><span>📊</span> Session Stats</h2>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-value" id="statSentences">0</div><div class="stat-label">Sentences</div></div>
+        <div class="stat-card green"><div class="stat-value" id="statWords">0</div><div class="stat-label">Words Signed</div></div>
+        <div class="stat-card yellow"><div class="stat-value" id="statDictHit">0%</div><div class="stat-label">Dict Coverage</div></div>
+        <div class="stat-card purple"><div class="stat-value" id="statLang">ASL</div><div class="stat-label">Current Lang</div></div>
+      </div>
+    </div>
+
+    <!-- ══ MY VOICE PANEL ══ -->
+    <div class="myvoice-panel" id="myVoicePanel" role="region" aria-label="My Voice — speak for me">
+      <div class="myvoice-header">
+        <h2><span class="mv-icon">🗣️</span> My Voice</h2>
+        <div class="badge" style="background:rgba(124,58,237,0.12);border-color:rgba(124,58,237,0.3);color:var(--accent2);">New Feature</div>
+      </div>
+      <p class="myvoice-tagline">
+        Record your natural sounds — even the softest hum or breath. <strong>SignBridge analyses your vocal characteristics</strong> and generates a personalised voice that speaks your typed words to hearing people, as if it were your own voice.
+      </p>
+
+      <!-- Profile status bar -->
+      <div class="voice-profile-status" id="vpStatus">
+        <div class="vp-dot" id="vpDot"></div>
+        <div class="vp-status-text">
+          <span id="vpStatusText">No voice profile yet — record your sounds below to begin</span>
+          <small id="vpStatusSub">Your voice profile is saved privately in this browser</small>
+        </div>
+      </div>
+
+      <div class="mv-steps">
+        <!-- Step 1: Record -->
+        <div class="mv-step" id="mvStep1">
+          <div class="mv-step-num">Step 1</div>
+          <div class="mv-step-title">🎙 Record Your Sounds</div>
+          <div class="mv-step-desc">Make any sounds you can — humming, breath, a vowel, any vocalisation. Hold for at least 3 seconds. We'll analyse the tone and pitch.</div>
+          <div class="mv-record-btn" id="mvRecordBtn" role="button" tabindex="0" aria-label="Start voice recording" aria-pressed="false">🎙️</div>
+          <div class="mv-record-timer" id="mvRecordTimer"></div>
+          <div class="mv-record-label" id="mvRecordLabel">tap to record</div>
+          <div class="mv-waveform" id="mvWaveform">
+            <div class="mv-bar" id="mvB1"></div><div class="mv-bar" id="mvB2"></div>
+            <div class="mv-bar" id="mvB3"></div><div class="mv-bar" id="mvB4"></div>
+            <div class="mv-bar" id="mvB5"></div><div class="mv-bar" id="mvB6"></div>
+            <div class="mv-bar" id="mvB7"></div><div class="mv-bar" id="mvB8"></div>
+            <div class="mv-bar" id="mvB9"></div><div class="mv-bar" id="mvB10"></div>
+            <div class="mv-bar" id="mvB11"></div><div class="mv-bar" id="mvB12"></div>
+          </div>
+          <!-- Pitch analysis result -->
+          <div class="pitch-display" id="pitchDisplay">
+            <div class="pitch-label">Voice Analysis</div>
+            <div class="pitch-bars" id="pitchBars"></div>
+            <div class="pitch-stats">
+              <div class="pitch-stat"><strong id="pitchHz">—</strong>Avg Pitch</div>
+              <div class="pitch-stat"><strong id="pitchWarmth">—</strong>Warmth</div>
+              <div class="pitch-stat"><strong id="pitchTone">—</strong>Tone</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Choose style -->
+        <div class="mv-step" id="mvStep2">
+          <div class="mv-step-num">Step 2</div>
+          <div class="mv-step-title">🎨 Refine Your Voice</div>
+          <div class="mv-step-desc">Based on your recording, we've suggested a voice style. You can also adjust it manually.</div>
+          <div class="voice-style-grid" id="voiceStyleGrid">
+            <div class="voice-style-card" data-style="warm" tabindex="0" role="radio" aria-checked="false">
+              <div class="vs-emoji">🌅</div>
+              <div class="vs-name">Warm</div>
+              <div class="vs-desc">Gentle, soft tone</div>
+            </div>
+            <div class="voice-style-card" data-style="clear" tabindex="0" role="radio" aria-checked="false">
+              <div class="vs-emoji">💎</div>
+              <div class="vs-name">Clear</div>
+              <div class="vs-desc">Crisp, precise</div>
+            </div>
+            <div class="voice-style-card" data-style="deep" tabindex="0" role="radio" aria-checked="false">
+              <div class="vs-emoji">🌊</div>
+              <div class="vs-name">Deep</div>
+              <div class="vs-desc">Rich, resonant</div>
+            </div>
+            <div class="voice-style-card" data-style="bright" tabindex="0" role="radio" aria-checked="false">
+              <div class="vs-emoji">✨</div>
+              <div class="vs-name">Bright</div>
+              <div class="vs-desc">Uplifting, light</div>
+            </div>
+          </div>
+          <!-- Fine controls -->
+          <div style="margin-top:10px;display:flex;flex-direction:column;gap:6px;">
+            <label style="font-size:0.62rem;color:var(--muted);">Pitch <span id="mvPitchVal" style="color:var(--accent2);">1.0×</span>
+              <input type="range" id="mvPitchSlider" min="0.5" max="2" step="0.05" value="1" style="width:100%;accent-color:var(--accent2);margin-top:3px;">
+            </label>
+            <label style="font-size:0.62rem;color:var(--muted);">Rate <span id="mvRateVal" style="color:var(--accent2);">0.9×</span>
+              <input type="range" id="mvRateSlider" min="0.5" max="1.5" step="0.05" value="0.9" style="width:100%;accent-color:var(--accent2);margin-top:3px;">
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Type & Speak -->
+      <div class="mv-speak-area">
+        <div class="mv-speak-label">
+          <span>💬 What do you want to say?</span>
+          <span style="font-size:0.58rem;color:var(--muted)" id="mvCharCount">0 chars</span>
+        </div>
+        <textarea class="mv-speak-input" id="mvSpeakInput" rows="3" placeholder="Type what you want to say to a hearing person... Your voice will speak it for you." aria-label="Type what you want to say"></textarea>
+      </div>
+
+      <!-- Autofill tip -->
+      <div class="mv-autofill-tip">
+        Have a sentence already signed? <a id="mvAutofill">Use my last signed sentence →</a>
+      </div>
+
+      <!-- Speaking wave -->
+      <div class="speaking-wave" id="speakingWave" aria-hidden="true">
+        <div class="sw-bar"></div><div class="sw-bar"></div><div class="sw-bar"></div>
+        <div class="sw-bar"></div><div class="sw-bar"></div>
+      </div>
+
+      <!-- BIG SPEAK BUTTON -->
+      <button class="mv-speak-btn" id="mvSpeakBtn" aria-label="Speak my words aloud" style="margin-top:12px;">
+        <span id="mvSpeakBtnIcon">🗣️</span>
+        <span id="mvSpeakBtnText">Speak For Me</span>
+      </button>
+    </div>
+
+    <!-- History -->
+    <div class="history-panel" id="historyPanel" role="region" aria-label="History">
+      <h2><span aria-hidden="true">📋</span> Sentence History
+        <button class="btn btn-sm" id="clearHistoryBtn">Clear</button>
+      </h2>
+      <div class="history-list" id="historyList" role="list">
+        <div class="history-empty">No sentences yet — start speaking!</div>
+      </div>
+    </div>
+
+    <!-- Alphabet -->
+    <section class="alpha-panel" aria-label="Fingerspelling A–Z reference">
+      <h2>🖐 <span>Fingerspelling</span> Reference — A to Z</h2>
+      <div class="alpha-grid" id="alphaGrid" role="list"></div>
+    </section>
+
+    <footer role="contentinfo">
+      <div>Built with ❤️ for the deaf and hard-of-hearing community · <a href="#" onclick="startTutorial();return false;">Take the tutorial</a></div>
+      <div style="margin-top:4px;font-size:0.6rem;">SignBridge is open for the world · Not a substitute for professional signing instruction</div>
+      <div class="footer-badges">
+        <span class="footer-badge">🤟 ASL</span>
+        <span class="footer-badge">🇬🇧 BSL</span>
+        <span class="footer-badge">🇦🇺 Auslan</span>
+        <span class="footer-badge">🧠 Grammar Engine</span>
+        <span class="footer-badge">♿ WCAG 2.1</span>
+        <span class="footer-badge">📦 PWA Ready</span>
+        <span class="footer-badge">🌐 Offline</span>
+      </div>
+    </footer>
+  </main>
+</div>
+
+<!-- Modal: sign detail / fingerspell / export -->
+<div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <div class="modal" id="modalInner">
+    <button class="modal-close" id="modalClose" aria-label="Close">✕</button>
+    <h3 id="mTitle"></h3>
+    <div class="modal-type" id="mType"></div>
+    <div class="modal-diagram" id="mDiagram" aria-hidden="true"></div>
+    <div class="modal-anim-preview" id="mAnimPrev" aria-hidden="true"><div class="modal-anim-dot" id="mAnimDot"></div></div>
+    <div class="modal-desc" id="mDesc"></div>
+    <div class="modal-motion" id="mMotion" style="display:none">
+      <div class="modal-motion-label">↕ Motion</div>
+      <div id="mMotionText"></div>
+    </div>
+    <div id="mExtra"></div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════
+// SVG HAND DIAGRAMS A–Z
+// ════════════════════════════════════════════════════
+const AC='#00e5ff',PC='#a855f7',FC='#1e293b',MC='#f59e0b';
+function mkS(b,l){return `<svg viewBox="0 0 100 115" fill="none" role="img" aria-label="Hand shape ${l}" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="98" height="113" rx="13" fill="#0d1525" stroke="rgba(0,229,255,0.07)" stroke-width="1"/>${b}<text x="50" y="110" text-anchor="middle" fill="${AC}" font-size="9" font-family="monospace" opacity="0.45">${l}</text></svg>`;}
+const pa=`<ellipse cx="50" cy="74" rx="28" ry="28" fill="${FC}" stroke="${AC}" stroke-width="1.8"/>`;
+const fi=(x,y,w,h,c=AC,rx=5)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${FC}" stroke="${c}" stroke-width="1.8"/>`;
+const th=(x,y,w,h)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="${FC}" stroke="${PC}" stroke-width="1.8"/>`;
+const dt=(cx,cy,c=AC)=>`<circle cx="${cx}" cy="${cy}" r="4" fill="${c}" opacity="0.55"/>`;
+const H={
+  A:mkS(`${pa}${fi(28,50,11,24)}${fi(40,46,11,28)}${fi(52,46,11,28)}${fi(64,50,11,24)}${th(14,58,20,14)}${dt(50,65)}`,'A'),
+  B:mkS(`${pa}${fi(28,26,11,48)}${fi(40,22,11,52)}${fi(52,22,11,52)}${fi(64,26,11,48)}${th(14,62,18,12)}`,'B'),
+  C:mkS(`<path d="M70 28Q88 52 70 76" stroke="${AC}" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M30 28Q12 52 30 76" stroke="${AC}" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M30 28Q50 18 70 28" stroke="${AC}" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M30 76Q50 86 70 76" stroke="${AC}" stroke-width="10" stroke-linecap="round" fill="none" stroke-dasharray="7 5"/>`,'C'),
+  D:mkS(`${pa}${fi(27,26,11,48)}<path d="M38 32Q70 40 70 58Q70 76 38 76" stroke="${AC}" stroke-width="1.8" fill="none"/><path d="M27 32Q16 54 27 76" stroke="${AC}" stroke-width="11" stroke-linecap="round" fill="none"/>${th(14,58,20,14)}`,'D'),
+  E:mkS(`${pa}<rect x="22" y="52" width="56" height="26" rx="7" fill="${FC}" stroke="${AC}" stroke-width="1.8"/>${fi(26,32,11,24,PC)}${fi(39,28,11,28,PC)}${fi(52,28,11,28,PC)}${fi(65,32,11,24,PC)}${th(13,58,19,14)}`,'E'),
+  F:mkS(`${pa}${fi(40,24,11,50)}${fi(52,24,11,50)}${fi(64,28,11,46)}<path d="M29 46Q20 58 30 66" stroke="${AC}" stroke-width="11" stroke-linecap="round" fill="none"/>${dt(33,56,PC)}<circle cx="33" cy="56" r="9" stroke="${PC}" stroke-width="1.5" fill="none"/>`,'F'),
+  G:mkS(`${pa}${fi(27,34,11,40)}<rect x="13" y="50" width="28" height="11" rx="5" fill="${FC}" stroke="${PC}" stroke-width="1.8"/>${fi(40,58,10,20)}${fi(52,58,10,20)}${fi(64,58,10,20)}`,'G'),
+  H:mkS(`${pa}${fi(27,30,11,44)}${fi(40,30,11,44)}${fi(53,54,10,20)}${fi(65,54,10,20)}${th(14,60,18,13)}`,'H'),
+  I:mkS(`${pa}${fi(28,54,10,22)}${fi(40,54,10,22)}${fi(52,54,10,22)}${fi(64,26,11,50)}${th(14,60,18,13)}`,'I'),
+  J:mkS(`${pa}${fi(28,54,10,22)}${fi(40,54,10,22)}${fi(52,54,10,22)}${fi(64,26,11,50)}${th(14,60,18,13)}<path d="M70 26Q84 14 74 8Q62 2 56 14" stroke="${MC}" stroke-width="2.2" stroke-linecap="round" fill="none"/><circle cx="56" cy="14" r="3" fill="${MC}" opacity="0.9"/>`,'J'),
+  K:mkS(`${pa}${fi(27,28,11,46)}${fi(40,34,11,40)}${fi(53,54,10,22)}${fi(65,54,10,22)}<rect x="12" y="48" width="24" height="11" rx="5" fill="${FC}" stroke="${PC}" stroke-width="1.8" transform="rotate(-28,24,53)"/>`,'K'),
+  L:mkS(`${pa}${fi(28,24,11,50)}<rect x="12" y="46" width="28" height="11" rx="5" fill="${FC}" stroke="${PC}" stroke-width="1.8"/>${fi(40,54,10,22)}${fi(52,54,10,22)}${fi(64,54,10,22)}`,'L'),
+  M:mkS(`${pa}<rect x="22" y="54" width="56" height="24" rx="7" fill="${FC}" stroke="${AC}" stroke-width="1.8"/>${fi(26,36,11,22)}${fi(39,30,11,28)}${fi(52,30,11,28)}${fi(65,36,11,22)}${th(13,57,18,13)}`,'M'),
+  N:mkS(`${pa}<rect x="22" y="57" width="56" height="22" rx="7" fill="${FC}" stroke="${AC}" stroke-width="1.8"/>${fi(26,38,11,23)}${fi(39,34,11,27)}${fi(52,34,11,27)}${fi(65,38,11,23)}${th(13,58,20,13)}`,'N'),
+  O:mkS(`<path d="M70 30Q88 54 70 78" stroke="${AC}" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M30 30Q12 54 30 78" stroke="${AC}" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M30 30Q50 20 70 30" stroke="${AC}" stroke-width="13" stroke-linecap="round" fill="none"/><path d="M30 78Q50 88 70 78" stroke="${AC}" stroke-width="13" stroke-linecap="round" fill="none"/><ellipse cx="50" cy="54" rx="13" ry="17" fill="#0d1525"/>`,'O'),
+  P:mkS(`${pa}<rect x="26" y="24" width="11" height="50" rx="5" fill="${FC}" stroke="${AC}" stroke-width="1.8" transform="rotate(18,31,55)"/><rect x="40" y="28" width="11" height="46" rx="5" fill="${FC}" stroke="${AC}" stroke-width="1.8" transform="rotate(8,45,55)"/>${fi(54,54,10,22)}${fi(66,54,10,22)}${th(13,46,24,11)}`,'P'),
+  Q:mkS(`${pa}${fi(28,26,11,50)}${fi(40,54,10,22)}${fi(52,54,10,22)}${fi(64,54,10,22)}<rect x="12" y="44" width="24" height="11" rx="5" fill="${FC}" stroke="${PC}" stroke-width="1.8" transform="rotate(-12,24,49)"/>${dt(24,49,PC)}`,'Q'),
+  R:mkS(`${pa}${fi(30,26,11,48)}<rect x="43" y="28" width="11" height="46" rx="5" fill="${FC}" stroke="${AC}" stroke-width="1.8" transform="rotate(-12,48,55)"/>${fi(55,54,10,22)}${fi(67,54,10,22)}${th(14,62,18,12)}<line x1="41" y1="40" x2="54" y2="34" stroke="${MC}" stroke-width="2"/>`,'R'),
+  S:mkS(`${pa}<rect x="22" y="50" width="56" height="28" rx="9" fill="${FC}" stroke="${AC}" stroke-width="1.8"/>${fi(26,34,11,20)}${fi(39,30,11,24)}${fi(52,30,11,24)}${fi(65,34,11,20)}${th(12,55,19,13)}<path d="M12,63 Q22,58 31,63" stroke="${PC}" stroke-width="2" fill="none"/>`,'S'),
+  T:mkS(`${pa}<rect x="22" y="52" width="56" height="26" rx="7" fill="${FC}" stroke="${AC}" stroke-width="1.8"/>${fi(26,36,11,20)}${fi(39,30,11,26)}${fi(52,30,11,26)}${fi(65,36,11,20)}<rect x="12" y="52" width="27" height="11" rx="5" fill="${FC}" stroke="${PC}" stroke-width="1.8"/>${dt(30,54,PC)}`,'T'),
+  U:mkS(`${pa}${fi(29,24,11,50)}${fi(42,24,11,50)}${fi(55,54,10,22)}${fi(67,54,10,22)}${th(14,62,18,12)}`,'U'),
+  V:mkS(`${pa}<rect x="25" y="22" width="11" height="52" rx="5" fill="${FC}" stroke="${AC}" stroke-width="1.8" transform="rotate(-9,30,55)"/><rect x="44" y="22" width="11" height="52" rx="5" fill="${FC}" stroke="${AC}" stroke-width="1.8" transform="rotate(9,49,55)"/>${fi(57,54,10,22)}${fi(69,54,10,22)}${th(14,64,18,12)}`,'V'),
+  W:mkS(`${pa}${fi(25,22,11,52)}${fi(39,22,11,52)}${fi(53,22,11,52)}${fi(66,54,10,22)}${th(13,65,18,11)}`,'W'),
+  X:mkS(`${pa}${fi(28,28,11,46)}<path d="M28,50 Q46,44 39,55" stroke="${AC}" stroke-width="3" fill="none"/>${fi(41,54,10,22)}${fi(53,54,10,22)}${fi(65,54,10,22)}${th(13,62,18,12)}`,'X'),
+  Y:mkS(`${pa}${fi(29,52,10,24)}${fi(41,52,10,24)}${fi(53,52,10,24)}${fi(66,24,11,52)}<rect x="12" y="46" width="24" height="12" rx="6" fill="${FC}" stroke="${PC}" stroke-width="1.8"/>`,'Y'),
+  Z:mkS(`${pa}${fi(28,28,11,46)}${fi(41,54,10,22)}${fi(53,54,10,22)}${fi(65,54,10,22)}${th(13,62,18,12)}<path d="M28 34 L52 34 L28 58 L52 58" stroke="${MC}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`,'Z'),
+};
+function getLS(l){const u=l.toUpperCase();return H[u]||mkS(`${pa}${fi(34,26,12,28)}${fi(50,22,12,32)}${th(14,62,18,12)}<text x="50" y="72" text-anchor="middle" fill="${AC}" font-size="24" font-family="Syne,sans-serif" font-weight="800">${u}</text>`,u);}
+
+// ════════════════════════════════════════════════
+// MOTION ANIMATION
+// ════════════════════════════════════════════════
+function getAnim(m){
+  if(!m)return'move-pulse';const s=m.toLowerCase();
+  if(s.includes('↑')||s.includes('up'))return'move-up';
+  if(s.includes('↓')||s.includes('down'))return'move-down';
+  if(s.includes('→')&&!s.includes('←'))return'move-right';
+  if(s.includes('←')&&!s.includes('→'))return'move-left';
+  if(s.includes('↔')||s.includes('shake')||s.includes('wag'))return'move-shake';
+  if(s.includes('↕')||s.includes('nod')||s.includes('alternate'))return'move-nod';
+  if(s.includes('↻')||s.includes('circle')||s.includes('rotate'))return'move-circle';
+  if(s.includes('tap')||s.includes('touch'))return'move-pulse';
+  return'move-pulse';
+}
+function motionOverlay(m){
+  const a=getAnim(m);
+  return`<div class="sign-motion-anim" style="width:28px;height:28px;top:8px;"><div class="motion-dot" style="animation:${a} ${a==='move-circle'?'1.4':'0.9'}s ${a==='move-circle'?'linear':'ease-in-out'} infinite;left:9px;top:9px;"></div></div>`;
+}
+
+// ════════════════════════════════════════════════
+// DICTIONARY
+// ════════════════════════════════════════════════
+function s(svg,desc,motion,type='word sign'){return{svg,desc,motion,type};}
+const D={
+  HELLO:{asl:s(H.B,'Open B-hand, tap forehead then arc outward','→ Forehead arc'),bsl:s(H.B,'Index & middle tap forehead twice','↓ Two taps')},
+  HI:{asl:s(H.B,'Open hand waves side to side','↔ Wave')},
+  GOODBYE:{asl:s(H.B,'Fingers open and close repeatedly','~~ Wave')},
+  MORNING:{asl:s(H.B,'Arm rises like sun, palm up','↑ Rise','time marker')},
+  EVENING:{asl:s(H.B,'Bent wrist droops over forearm','↓ Droop')},
+  NIGHT:{asl:s(H.B,'Bent hand arcs down over forearm','↓ Arc')},
+  I:{asl:s(H.I,'Point index at own chest','Static','pronoun'),bsl:s(H.I,'Point to self','→ Self','pronoun')},
+  ME:{asl:s(H.I,'Index touches chest','Tap chest','pronoun')},
+  YOU:{asl:s(H.D,'Index points at other person','→ Forward','pronoun')},
+  WE:{asl:s(H.W,'Index touches chest, arcs to side','← → Arc','pronoun')},
+  THEY:{asl:s(H.D,'Index sweeps side to side','↔ Sweep','pronoun')},
+  HE:{asl:s(H.D,'Point to the side','→ Side','pronoun')},
+  SHE:{asl:s(H.D,'Point to the side','→ Side','pronoun')},
+  YES:{asl:s(H.S,'S-fist nods up and down','↕ Nod'),bsl:s(H.Y,'Y-hand nods','↕ Nod')},
+  NO:{asl:s(H.N,'Index & middle tap thumb twice','→← Taps'),bsl:s(H.N,'Index wags side to side','↔ Wag')},
+  PLEASE:{asl:s(H.B,'Flat palm circles on chest','↻ Circle'),bsl:s(H.B,'Fingertips tap lips','↓ Tap')},
+  SORRY:{asl:s(H.S,'S-fist circles on chest','↻ Circle')},
+  THANK:{asl:s(H.B,'Flat hand from chin swings forward','→ Chin out'),bsl:s(H.B,'Hand from lips forward','→ Out')},
+  THANKS:{asl:s(H.B,'Same as THANK','→ Chin out')},
+  WHAT:{asl:s(H.D,'Index taps across fingers','↔ Across','question')},
+  WHO:{asl:s(H.L,'L-hand circles near mouth','↻ Circle','question')},
+  WHERE:{asl:s(H.D,'Index wags side to side','↔ Wag','question')},
+  WHEN:{asl:s(H.D,'Index circles then taps','↻ → Tap','question')},
+  WHY:{asl:s(H.W,'Middle finger to forehead, flick out','→ Flick','question')},
+  HOW:{asl:s(H.B,'Curved hands roll forward','↻ Roll','question')},
+  WHICH:{asl:s(H.A,'A-hands alternate up and down','↕ Alternate','question')},
+  LOVE:{asl:s(H.S,'Cross arms over chest','Arms cross')},
+  LIKE:{asl:s(H.F,'Middle & thumb pull from chest','→ Pull')},
+  WANT:{asl:s(H.C,'C-hands pull toward body','← Pull')},
+  NEED:{asl:s(H.X,'X-hand bends at wrist repeatedly','↓ Bend')},
+  HAVE:{asl:s(H.B,'Bent hands touch chest','Touch chest')},
+  KNOW:{asl:s(H.B,'Flat hand taps forehead','Tap temple')},
+  THINK:{asl:s(H.D,'Index circles at temple','↻ Circle')},
+  UNDERSTAND:{asl:s(H.S,'S-fist at forehead, flick index up','↑ Flick')},
+  HELP:{asl:s(H.A,'Thumbs-up lifted on flat palm','↑ Lift up')},
+  STOP:{asl:s(H.B,'Flat hand chops onto palm','↓ Chop')},
+  GO:{asl:s(H.D,'Both indexes arc forward','→ Arc')},
+  COME:{asl:s(H.D,'Indexes arc toward body','← Arc')},
+  SEE:{asl:s(H.V,'V-hand moves forward from eyes','→ From eyes')},
+  HEAR:{asl:s(H.D,'Index circles near ear','↻ Circle')},
+  SPEAK:{asl:s(H.D,'Index circles near mouth','↻ Circle')},
+  LEARN:{asl:s(H.B,'Fingers take from palm to forehead','↑ To forehead')},
+  WORK:{asl:s(H.S,'S-wrist taps other S-wrist twice','↓ Two taps')},
+  PLAY:{asl:s(H.Y,'Y-hands shake side to side','↔ Shake')},
+  EAT:{asl:s(H.F,'Flat O taps mouth repeatedly','→← Tap')},
+  DRINK:{asl:s(H.C,'C-hand tilts to mouth','↑ Tilt')},
+  SLEEP:{asl:s(H.B,'Hand draws down over face','↓ Down')},
+  BUY:{asl:s(H.B,'Flat O on palm swings forward','→ Swing')},
+  GIVE:{asl:s(H.B,'Flat hand moves forward','→ Forward')},
+  TAKE:{asl:s(H.B,'Hand sweeps toward body','← To self')},
+  WAIT:{asl:s(H.B,'Both curved hands wiggle','~~ Wiggle')},
+  GOOD:{asl:s(H.B,'Flat hand chin → forward onto palm','→ Chin forward'),bsl:s(H.B,'Thumbs-up','Static')},
+  BAD:{asl:s(H.B,'Flat hand at chin flips down','↓ Flip')},
+  HAPPY:{asl:s(H.B,'Hands brush upward on chest','↑ Brush up')},
+  SAD:{asl:s(H.B,'Open hands drag down face','↓ Down face')},
+  ANGRY:{asl:s(H.C,'Claw hands pull from face','→ Pull')},
+  SCARED:{asl:s(H.S,'Both S-hands fly open','← → Open')},
+  TIRED:{asl:s(H.B,'Bent hands on chest drop down','↓ Drop')},
+  BEAUTIFUL:{asl:s(H.B,'Open hand circles face, closes to O','↻ Circle face')},
+  BIG:{asl:s(H.L,'L-hands spread apart','← → Spread')},
+  SMALL:{asl:s(H.B,'Flat hands close together','→ ← Close')},
+  FAST:{asl:s(H.D,'Index flicks to X quickly','⚡ Flick')},
+  SLOW:{asl:s(H.B,'One hand strokes back of other','→ Slow')},
+  HOT:{asl:s(H.C,'C-hand at mouth twists down','↻↓ Twist')},
+  COLD:{asl:s(H.S,'S-hands shiver side to side','↔ Shiver')},
+  NOT:{asl:s(H.A,'Thumb moves out from chin','→ Thumb out','negation'),bsl:s(H.N,'N-hand shakes','↔ Shake','negation')},
+  DONT:{asl:s(H.D,'Index wags side to side','↔ Wag','negation')},
+  NEVER:{asl:s(H.B,'B-hand wavy downward','↓ Wavy','negation')},
+  CANT:{asl:s(H.D,'One index chops other','↓ Chop','negation')},
+  NOW:{asl:s(H.Y,'Y-hands drop simultaneously','↓ Drop','time marker')},
+  LATER:{asl:s(H.L,'L-hand rotates forward','→ Rotate','time marker')},
+  TODAY:{asl:s(H.Y,'NOW + DAY combined','↓ Drop','time marker')},
+  TOMORROW:{asl:s(H.A,'A-hand thumb swings forward','→ Swing','time marker')},
+  YESTERDAY:{asl:s(H.A,'A-hand thumb swings backward','← Swing','time marker')},
+  HOME:{asl:s(H.O,'Flat O taps lips then cheek','Lips → Cheek')},
+  SCHOOL:{asl:s(H.B,'Both flat palms clap twice','↓ Clap x2')},
+  HOSPITAL:{asl:s(H.H,'H-hand draws cross on arm','+ Cross')},
+  BATHROOM:{asl:s(H.T,'T-hand shakes side to side','↔ Shake')},
+  WATER:{asl:s(H.W,'W-hand taps chin twice','↓ Two taps')},
+  FOOD:{asl:s(H.F,'Flat O taps mouth repeatedly','→← Tap')},
+  MONEY:{asl:s(H.B,'Flat O taps open palm twice','↓ Two taps')},
+  CAR:{asl:s(H.S,'Both S-hands mime steering','↻ Turn')},
+  PHONE:{asl:s(H.Y,'Y-hand at face','Static')},
+  BOOK:{asl:s(H.B,'Flat hands open like a book','← → Open')},
+  DOCTOR:{asl:s(H.D,'D-hand taps inner wrist','↓ Tap wrist')},
+  POLICE:{asl:s(H.C,'C-hand taps chest','↓ Tap chest')},
+  MOTHER:{asl:s(H.A,'Thumb taps chin twice','↓ Two taps')},
+  FATHER:{asl:s(H.B,'Thumb taps forehead twice','↓ Two taps')},
+  FAMILY:{asl:s(H.F,'F-hands circle outward then join','↻ Circle')},
+  FRIEND:{asl:s(H.X,'Hook index fingers, swap','↔ Swap')},
+  NAME:{asl:s(H.H,'H taps H twice','↓ Two taps')},
+  MORE:{asl:s(H.F,'O-hands tap fingertips twice','→← Two taps')},
+  LESS:{asl:s(H.B,'Flat hand lowers beneath other','↓ Lower')},
+  ALL:{asl:s(H.B,'Hand sweeps around other','↻ Sweep')},
+  MUSIC:{asl:s(H.B,'Flat hand waves over forearm','↻ Wave')},
+  WALK:{asl:s(H.B,'Flat hands alternate forward','↕ Alternate')},
+  FIRE:{asl:s(H.B,'Fingers flutter upward','↑ Flutter')},
+  PAIN:{asl:s(H.D,'Both indexes twist toward each other','↻ Twist')},
+  MEDICINE:{asl:s(H.M,'Middle finger circles in palm','↻ Circle')},
+};
+function getSign(w,lang){
+  const e=D[w];if(!e)return null;
+  return(lang==='BSL'&&e.bsl)?e.bsl:(e.asl||e.bsl);
+}
+
+// ════════════════════════════════════════════════
+// GRAMMAR ENGINE
+// ════════════════════════════════════════════════
+const TW=new Set(['NOW','TODAY','TOMORROW','YESTERDAY','MORNING','EVENING','NIGHT','LATER','SOON','ALREADY','ALWAYS','NEVER','SOMETIMES','WHEN']);
+const QW=new Set(['WHAT','WHO','WHERE','WHEN','WHY','HOW','WHICH']);
+const NW=new Set(['NOT','DONT','NEVER','CANT','NO','NOTHING']);
+const SW=new Set(['I','ME','YOU','WE','THEY','HE','SHE','IT','MY','YOUR','US']);
+const SK=new Set(['THE','A','AN','IS','ARE','WAS','WERE','AM','WILL','WOULD','COULD','SHOULD','OF','IN','ON','AT','TO','FOR','AND','OR','BUT','SO','VERY','REALLY','JUST','HAVE','HAS','HAD','BE','BEEN','DO','DOES','DID','WITH','BY','FROM','THAT','THIS','THESE','THOSE','SOME']);
+function tag(w){if(QW.has(w))return'question';if(NW.has(w))return'negation';if(TW.has(w))return'time';if(SW.has(w))return'subject';if(SK.has(w))return'skip';return'content';}
+function parseOrder(words){
+  const tagged=words.map(w=>({word:w,role:tag(w)}));
+  const tm=[],su=[],qu=[],ne=[],co=[];
+  tagged.forEach(t=>{if(t.role==='skip')return;if(t.role==='time')tm.push(t);else if(t.role==='subject')su.push(t);else if(t.role==='question')qu.push(t);else if(t.role==='negation')ne.push(t);else co.push(t);});
+  const ord=[...tm,...su,...co,...ne,...qu];
+  let vf=false;
+  return ord.map(t=>{
+    if(['time','subject','question','negation'].includes(t.role))return t;
+    const sg=getSign(t.word,'ASL');
+    if(sg&&!vf){vf=true;return{...t,role:'verb'};}
+    if(vf)return{...t,role:'object'};
+    return{...t,role:'topic'};
+  });
+}
+function grammarNote(lab,lang){
+  const n=[];
+  if(lab.some(t=>t.role==='time'))n.push(`<span>Time first</span> — ${lang} places time markers before everything else`);
+  if(lab.some(t=>t.role==='question'))n.push(`<span>Question last</span> — WH-question with raised eyebrows`);
+  if(lab.some(t=>t.role==='negation'))n.push(`<span>Negation after verb</span> — headshake while signing`);
+  if(!n.length)n.push(`<span>Topic-Comment</span> — establish topic first, then describe it`);
+  return n.join(' · ');
+}
+
+// ════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════
+let rec=null,listening=false,lang='ASL';
+let history=[],interim='';
+let pbCards=[],pbIdx=-1,pbTimer=null,pbAuto=false;
+let stats={sentences:0,words:0,hits:0,total:0};
+
+// DOM
+const $=id=>document.getElementById(id);
+const micBtn=$('micBtn'),micStatus=$('micStatus'),ttx=$('ttext'),out=$('signsOutput'),
+  clearBtn=$('clearBtn'),typeBtn=$('typeBtn'),typeBox=$('typeBox'),ti=$('typeInput'),
+  spd=$('speedSlider'),spdV=$('speedVal'),gramPanel=$('grammarPanel'),
+  gramRow=$('grammarRow'),gramNoteEl=$('grammarNote'),wc=$('wordCount'),
+  mo=$('modalOverlay'),mc=$('modalClose'),hp=$('historyPanel'),hl=$('historyList'),
+  htBtn=$('historyToggleBtn'),chBtn=$('clearHistoryBtn'),
+  pbBar=$('playbackBar'),pbWord=$('pbWord'),pbCnt=$('pbCount'),
+  pbPrev=$('pbPrev'),pbPP=$('pbPlayPause'),pbNext=$('pbNext'),pbStop=$('pbStop'),
+  pbFill=$('pbFill'),playBtn=$('playbackBtn'),ttsBtn=$('ttsBtn'),
+  shareBtn=$('shareBtn'),statsBtn=$('statsBtn'),statsPanel=$('statsPanel'),
+  srLive=$('srLive'),themeBtn=$('themeBtn'),hcBtn=$('hcBtn'),
+  toast=$('toast'),tutBtn=$('tutorialBtn');
+
+// ── SPLASH ──
+function hideSplash(){
+  const sp=$('splash');sp.classList.add('hidden');
+  setTimeout(()=>{sp.style.display='none';},500);
+  localStorage.setItem('sb_seen','1');
+}
+if(localStorage.getItem('sb_seen')){$('splash').style.display='none';}
+$('splashStart').addEventListener('click',()=>{hideSplash();setTimeout(startTutorial,600);});
+$('splashSkip').addEventListener('click',hideSplash);
+
+// ── THEME ──
+themeBtn.addEventListener('click',()=>{
+  const d=document.documentElement,dark=d.getAttribute('data-theme')==='dark';
+  d.setAttribute('data-theme',dark?'light':'dark');themeBtn.textContent=dark?'🌙':'☀️';
+  showToast(dark?'Light theme':'Dark theme');
+});
+
+// ── HIGH CONTRAST ──
+let hcOn=false;
+hcBtn.addEventListener('click',()=>{hcOn=!hcOn;document.body.classList.toggle('high-contrast',hcOn);hcBtn.classList.toggle('active',hcOn);hcBtn.setAttribute('aria-pressed',hcOn);showToast(hcOn?'High contrast on':'High contrast off');});
+
+// ── OFFLINE ──
+function checkOnline(){$('offlineNotice').classList.toggle('visible',!navigator.onLine);}
+window.addEventListener('online',checkOnline);window.addEventListener('offline',checkOnline);checkOnline();
+
+// ── PWA INSTALL ──
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;$('installBanner').classList.add('visible');});
+$('installBtn').addEventListener('click',async()=>{if(!deferredPrompt)return;deferredPrompt.prompt();const{outcome}=await deferredPrompt.userChoice;if(outcome==='accepted'){$('installBanner').classList.remove('visible');showToast('✅ SignBridge installed!');}deferredPrompt=null;});
+$('installDismiss').addEventListener('click',()=>$('installBanner').classList.remove('visible'));
+window.addEventListener('appinstalled',()=>{$('installBanner').classList.remove('visible');showToast('✅ Installed!');});
+
+// ── TOAST ──
+let toastT;
+function showToast(msg,type=''){toast.textContent=msg;toast.className='toast show'+(type?' '+type:'');clearTimeout(toastT);toastT=setTimeout(()=>toast.className='toast',2400);}
+function announce(msg){srLive.textContent='';setTimeout(()=>srLive.textContent=msg,50);}
+
+// ── LANG ──
+document.querySelectorAll('.lang-btn').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.lang-btn').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-pressed','false');});
+  b.classList.add('active');b.setAttribute('aria-pressed','true');lang=b.dataset.lang;
+  $('statLang').textContent=lang;reprocessAll();showToast('Language: '+lang);announce('Language: '+lang);
+}));
+spd.addEventListener('input',()=>spdV.textContent=parseFloat(spd.value).toFixed(1)+'×');
+
+// ── SPEECH ──
+function setupRec(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){micStatus.textContent='speech not supported — use type mode';micBtn.style.opacity='.5';micBtn.style.cursor='not-allowed';return null;}
+  const r=new SR();r.continuous=true;r.interimResults=true;r.lang='en-US';
+  r.onresult=e=>{
+    let fin='',int='';
+    for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)fin+=e.results[i][0].transcript;else int+=e.results[i][0].transcript;}
+    interim=int;
+    if(fin)processSentence(fin.trim(),true);
+    updateTtext();
+  };
+  r.onerror=e=>{micStatus.textContent='error: '+e.error;stopL();};
+  r.onend=()=>{if(listening)r.start();};
+  return r;
+}
+function startL(){if(!rec)rec=setupRec();if(!rec)return;listening=true;rec.start();micBtn.classList.add('listening');micBtn.textContent='⏹';micBtn.setAttribute('aria-pressed','true');micBtn.setAttribute('aria-label','Stop recording');micStatus.textContent='● recording — speak clearly';micStatus.classList.add('active');announce('Recording started');}
+function stopL(){listening=false;if(rec)rec.stop();micBtn.classList.remove('listening');micBtn.textContent='🎤';micBtn.setAttribute('aria-pressed','false');micBtn.setAttribute('aria-label','Start recording');micStatus.textContent='click microphone to start speaking';micStatus.classList.remove('active');announce('Stopped');}
+micBtn.addEventListener('click',()=>listening?stopL():startL());
+
+function updateTtext(){
+  const all=history.map(s=>s.original).join(' ')+(interim?' '+interim:'');
+  if(!all.trim()){ttx.innerHTML='Your speech will appear here...<span class="cursor" aria-hidden="true"></span>';ttx.classList.add('empty');}
+  else{ttx.innerHTML=all.trim()+'<span class="cursor" aria-hidden="true"></span>';ttx.classList.remove('empty');}
+  const n=all.trim().split(/\s+/).filter(Boolean).length;
+  wc.textContent=n?n+' words':'';
+}
+
+// ── URL PARAMS: pre-fill sentence from ?q= ──
+(()=>{
+  const p=new URLSearchParams(window.location.search).get('q');
+  if(p&&p.trim())setTimeout(()=>{hideSplash();processSentence(decodeURIComponent(p),true);},700);
+})();
+
+// ── PROCESS SENTENCE ──
+function processSentence(text,append=true){
+  if(!text.trim())return;
+  const raw=text.toUpperCase().replace(/[^A-Z'\s]/g,'').split(/\s+/).filter(Boolean)
+    .map(w=>w.replace("DON'T","DONT").replace("CAN'T","CANT").replace("WON'T","WONT").replace("I'M","I").replace("I'VE","I").replace("I'LL","I").replace("I'D","I"));
+  const labeled=parseOrder(raw);
+  const note=grammarNote(labeled,lang);
+  renderGrammar(labeled,note);
+  const entry={original:text,labeled,note,lang,id:Date.now()};
+  if(append){history.push(entry);appendBlock(entry);addToHistory(entry);}
+  updateTtext();
+  // Stats
+  stats.sentences++;
+  stats.words+=labeled.length;
+  labeled.forEach(t=>{stats.total++;if(getSign(t.word,lang))stats.hits++;});
+  updateStats();
+  announce('Translated: '+labeled.map(t=>t.word).join(', '));
+  // TTS
+  if('speechSynthesis'in window){const u=new SpeechSynthesisUtterance(labeled.map(t=>t.word).join(', '));u.rate=.88;speechSynthesis.cancel();speechSynthesis.speak(u);}
+}
+
+function reprocessAll(){
+  stopPlayback();out.innerHTML='';
+  if(!history.length){out.innerHTML=`<div class="empty-state"><div class="icon">🤲</div>Speak or type a sentence to begin</div>`;return;}
+  history.forEach(e=>{
+    e.lang=lang;
+    const raw=e.original.toUpperCase().replace(/[^A-Z'\s]/g,'').split(/\s+/).filter(Boolean).map(w=>w.replace("DON'T","DONT").replace("CAN'T","CANT"));
+    e.labeled=parseOrder(raw);
+    appendBlock(e);
+  });
+}
+
+// ── GRAMMAR PANEL ──
+function renderGrammar(labeled,note){
+  gramPanel.classList.add('visible');gramRow.innerHTML='';
+  labeled.forEach((t,i)=>{
+    if(i>0){const a=document.createElement('span');a.className='grammar-arrow';a.textContent='→';a.setAttribute('aria-hidden','true');gramRow.appendChild(a);}
+    const tok=document.createElement('span');tok.className=`grammar-token gt-${t.role}`;tok.textContent=t.word;tok.title=t.role;gramRow.appendChild(tok);
+  });
+  gramNoteEl.innerHTML=note;
+}
+
+// ── RENDER BLOCK ──
+function appendBlock(entry){
+  const empty=out.querySelector('.empty-state');if(empty)empty.remove();
+  const block=document.createElement('div');block.className='sentence-block';block.setAttribute('data-id',entry.id);
+  if(out.querySelectorAll('.sentence-block').length>0){
+    const br=document.createElement('div');br.className='phrase-break';br.setAttribute('aria-hidden','true');
+    br.innerHTML=`<div class="phrase-break-line"></div><div class="phrase-break-label">⏸ new sentence</div><div class="phrase-break-line"></div>`;
+    block.appendChild(br);
+  }
+  const meta=document.createElement('div');meta.className='sentence-meta';
+  meta.innerHTML=`<span class="lang-tag">${entry.lang}</span><span class="original">"${entry.original}"</span>`;
+  block.appendChild(meta);
+  const row=document.createElement('div');row.className='signs-row';row.setAttribute('role','list');
+
+  entry.labeled.forEach((t,i)=>{
+    if(i>0){const arr=document.createElement('span');arr.className='flow-arrow';arr.setAttribute('aria-hidden','true');arr.textContent='›';row.appendChild(arr);}
+    const card=document.createElement('div');card.className='sign-card';card.setAttribute('tabindex','0');card.setAttribute('role','listitem');card.setAttribute('data-word',t.word);
+    const ws=getSign(t.word,entry.lang);
+    if(ws){
+      card.setAttribute('aria-label',`${t.word}, ${t.role}, ${ws.desc}`);
+      if(['time','subject','question','negation'].includes(t.role)){
+        const b=document.createElement('div');b.className=`sign-role-badge role-${t.role}`;b.textContent=t.role;b.setAttribute('aria-hidden','true');card.appendChild(b);
+      }
+      const d=document.createElement('div');d.innerHTML=motionOverlay(ws.motion)+ws.svg;
+      const w=document.createElement('div');w.className='sign-word';w.textContent=t.word;
+      const tg=document.createElement('div');tg.className='sign-lang-tag';tg.textContent=`${entry.lang} · ${ws.type}`;
+      card.append(d,w,tg);
+      const open=()=>showModal(t.word,ws,ws.svg);
+      card.addEventListener('click',open);card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}});
+    } else {
+      const lets=t.word.split('');
+      card.setAttribute('aria-label',`${t.word}, fingerspell: ${lets.join(', ')}`);
+      const fr=document.createElement('div');fr.className='fspell-row';fr.setAttribute('aria-hidden','true');
+      fr.innerHTML=lets.map(l=>`<div>${getLS(l)}</div>`).join('');
+      const w=document.createElement('div');w.className='sign-word';w.textContent=t.word;
+      const tg=document.createElement('div');tg.className='sign-lang-tag';tg.textContent=`${entry.lang} · fingerspell`;
+      card.append(fr,w,tg);card.style.maxWidth=Math.min(220,44*lets.length+28)+'px';
+      const open=()=>showFSModal(t.word,lets);
+      card.addEventListener('click',open);card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}});
+    }
+    row.appendChild(card);
+  });
+  block.appendChild(row);out.appendChild(block);
+  block.scrollIntoView({behavior:'smooth',block:'nearest'});
+  collectPBCards();
+}
+
+// ── STATS ──
+function updateStats(){
+  $('statSentences').textContent=stats.sentences;
+  $('statWords').textContent=stats.words;
+  const pct=stats.total?Math.round((stats.hits/stats.total)*100):0;
+  $('statDictHit').textContent=pct+'%';
+  $('statLang').textContent=lang;
+}
+
+// ── PLAYBACK ──
+function collectPBCards(){pbCards=Array.from(out.querySelectorAll('.sign-card'));}
+function startPlayback(){collectPBCards();if(!pbCards.length)return;pbIdx=0;pbAuto=true;pbBar.classList.add('visible');playBtn.textContent='⏹ Stop';pbPP.textContent='⏸ Pause';stepPB();}
+function stopPlayback(){clearTimeout(pbTimer);pbAuto=false;pbIdx=-1;pbCards.forEach(c=>c.classList.remove('playback-active'));pbBar.classList.remove('visible');playBtn.textContent='▶ Play';pbWord.textContent='—';pbCnt.textContent='';pbFill.style.width='0%';}
+function stepPB(){
+  pbCards.forEach(c=>c.classList.remove('playback-active'));
+  if(pbIdx<0||pbIdx>=pbCards.length){stopPlayback();return;}
+  const card=pbCards[pbIdx];card.classList.add('playback-active');card.scrollIntoView({behavior:'smooth',block:'nearest'});
+  const word=card.getAttribute('data-word');
+  pbWord.textContent=word;pbCnt.textContent=`${pbIdx+1}/${pbCards.length}`;
+  const pct=((pbIdx+1)/pbCards.length)*100;pbFill.style.width=pct+'%';
+  announce('Sign: '+word);
+  if('speechSynthesis'in window){const u=new SpeechSynthesisUtterance(word);u.rate=.82;speechSynthesis.cancel();speechSynthesis.speak(u);}
+  if(pbAuto){const d=2200/parseFloat(spd.value);pbTimer=setTimeout(()=>{pbIdx++;stepPB();},d);}
+}
+pbNext.addEventListener('click',()=>{pbIdx=Math.min(pbIdx+1,pbCards.length-1);clearTimeout(pbTimer);stepPB();});
+pbPrev.addEventListener('click',()=>{pbIdx=Math.max(pbIdx-1,0);clearTimeout(pbTimer);stepPB();});
+pbStop.addEventListener('click',stopPlayback);
+pbPP.addEventListener('click',()=>{if(pbAuto){clearTimeout(pbTimer);pbAuto=false;pbPP.textContent='▶ Play';}else{pbAuto=true;pbPP.textContent='⏸ Pause';stepPB();}});
+playBtn.addEventListener('click',()=>{if(pbAuto||pbIdx>=0)stopPlayback();else startPlayback();});
+
+// ── TTS ──
+ttsBtn.addEventListener('click',()=>{
+  if(!history.length){showToast('No sentences to read','error');return;}
+  const words=history.flatMap(e=>e.labeled.map(t=>t.word));
+  if(!('speechSynthesis'in window)){showToast('TTS not supported','error');return;}
+  const u=new SpeechSynthesisUtterance('Signed sequence: '+words.join(', '));u.rate=.86;speechSynthesis.cancel();speechSynthesis.speak(u);
+  showToast('Reading signed sequence…');
+});
+
+// ── SHARE & EXPORT ──
+shareBtn.addEventListener('click',()=>{
+  if(!history.length){showToast('Nothing to share yet','error');return;}
+  const lastSentence=history[history.length-1].original;
+  const url=`${location.origin}${location.pathname}?q=${encodeURIComponent(lastSentence)}`;
+  showExportModal(lastSentence,url);
+});
+
+function showExportModal(sentence,url){
+  $('mTitle').textContent='Share & Export';
+  $('mType').textContent='SignBridge · last sentence';
+  $('mDiagram').innerHTML='';$('mAnimPrev').style.display='none';
+  $('mDesc').textContent=`"${sentence}"`;
+  $('mMotion').style.display='none';
+  $('mExtra').innerHTML=`
+    <div class="export-grid">
+      <div class="export-option" id="eCopy" tabindex="0" role="button" aria-label="Copy link">
+        <div class="eo-icon">🔗</div>
+        <div class="eo-title">Copy Link</div>
+        <div class="eo-desc">Share this sentence via URL</div>
+      </div>
+      <div class="export-option" id="eText" tabindex="0" role="button" aria-label="Copy as text">
+        <div class="eo-icon">📋</div>
+        <div class="eo-title">Copy Signs</div>
+        <div class="eo-desc">Copy signed word sequence</div>
+      </div>
+      <div class="export-option" id="eNative" tabindex="0" role="button" aria-label="Native share">
+        <div class="eo-icon">📤</div>
+        <div class="eo-title">Share</div>
+        <div class="eo-desc">Open device share sheet</div>
+      </div>
+      <div class="export-option" id="ePrint" tabindex="0" role="button" aria-label="Print">
+        <div class="eo-icon">🖨️</div>
+        <div class="eo-title">Print</div>
+        <div class="eo-desc">Print sign reference sheet</div>
+      </div>
+    </div>
+    <div style="margin-top:12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:0.7rem;color:var(--muted);word-break:break-all;">${url}</div>`;
+  mo.classList.add('open');document.getElementById('modalClose').focus();
+  setTimeout(()=>{
+    const signed=history.flatMap(e=>e.labeled.map(t=>t.word)).join(' → ');
+    $('eCopy').addEventListener('click',()=>{navigator.clipboard?.writeText(url);showToast('🔗 Link copied!','success');closeModal();});
+    $('eText').addEventListener('click',()=>{navigator.clipboard?.writeText(signed);showToast('📋 Signs copied!','success');closeModal();});
+    $('eNative').addEventListener('click',()=>{if(navigator.share){navigator.share({title:'SignBridge',text:`Signed: ${signed}`,url}).catch(()=>{});}else{showToast('Share not supported','error');}closeModal();});
+    $('ePrint').addEventListener('click',()=>{closeModal();setTimeout(()=>window.print(),200);});
+  },100);
+}
+
+// ── HISTORY ──
+function addToHistory(entry){
+  const signed=entry.labeled.map(t=>t.word).join(' → ');
+  const item=document.createElement('div');item.className='history-item';item.setAttribute('tabindex','0');item.setAttribute('role','listitem');
+  item.innerHTML=`<div class="history-original">"${entry.original}"</div><div class="history-signed">${signed}</div><div class="history-meta">${entry.lang} · ${new Date().toLocaleTimeString()}</div>`;
+  const replay=()=>{out.innerHTML='';appendBlock(entry);renderGrammar(entry.labeled,entry.note);};
+  item.addEventListener('click',replay);item.addEventListener('keydown',e=>{if(e.key==='Enter')replay();});
+  const empty=hl.querySelector('.history-empty');if(empty)empty.remove();
+  hl.insertBefore(item,hl.firstChild);
+}
+htBtn.addEventListener('click',()=>{const open=hp.style.display!=='block';hp.style.display=open?'block':'none';htBtn.textContent=open?'✕ History':'📋 History';htBtn.setAttribute('aria-expanded',open);});
+chBtn.addEventListener('click',()=>{history=[];hl.innerHTML='<div class="history-empty">No sentences yet.</div>';stats={sentences:0,words:0,hits:0,total:0};updateStats();});
+
+// ── STATS ──
+statsBtn.addEventListener('click',()=>{const v=statsPanel.classList.toggle('visible');statsBtn.setAttribute('aria-expanded',v);if(v)updateStats();});
+
+// ── CLEAR ──
+clearBtn.addEventListener('click',()=>{
+  history=[];interim='';stopPlayback();
+  out.innerHTML=`<div class="empty-state"><div class="icon">🤲</div>Speak or type a sentence to begin —<br>SignBridge parses grammar and shows signs in correct order</div>`;
+  gramPanel.classList.remove('visible');
+  ttx.innerHTML='Your speech will appear here...<span class="cursor" aria-hidden="true"></span>';ttx.classList.add('empty');
+  wc.textContent='';hl.innerHTML='<div class="history-empty">No sentences yet.</div>';
+  speechSynthesis&&speechSynthesis.cancel();
+  stats={sentences:0,words:0,hits:0,total:0};updateStats();
+  announce('Cleared');showToast('Cleared');
+});
+
+// ── TYPE MODE ──
+let typeVis=false;
+typeBtn.addEventListener('click',()=>{typeVis=!typeVis;typeBox.style.display=typeVis?'block':'none';typeBtn.textContent=typeVis?'✕ Hide':'⌨ Type';typeBtn.setAttribute('aria-expanded',typeVis);if(typeVis)ti.focus();});
+ti.addEventListener('keydown',e=>{if(e.key==='Enter'){const v=ti.value.trim();if(v){processSentence(v);ti.value='';}}} );
+
+// ── MODAL ──
+function animDot(m){const dot=$('mAnimDot');const a=getAnim(m)||'move-pulse';dot.style.animation='none';void dot.offsetWidth;dot.style.animation=`${a} ${a==='move-circle'?'1.4':'0.9'}s ${a==='move-circle'?'linear':'ease-in-out'} infinite`;}
+function showModal(word,ws,svg){
+  $('mTitle').textContent=word;$('mType').textContent=`${lang} · ${ws.type}`;
+  $('mDiagram').innerHTML=`<div style="width:135px;height:135px">${svg}</div>`;
+  $('mAnimPrev').style.display='flex';
+  $('mDesc').textContent=ws.desc;$('mExtra').innerHTML='';
+  const mm=$('mMotion'),mt=$('mMotionText');
+  if(ws.motion){mm.style.display='block';mt.textContent=ws.motion;animDot(ws.motion);}else mm.style.display='none';
+  mo.classList.add('open');mc.focus();
+}
+function showFSModal(word,lets){
+  $('mTitle').textContent=word;$('mType').textContent=`${lang} · fingerspelling`;
+  $('mDiagram').innerHTML=`<div style="display:flex;flex-wrap:wrap;gap:5px;justify-content:center">${lets.map(l=>`<div style="text-align:center"><div style="width:58px;height:58px">${getLS(l)}</div><div style="font-size:0.63rem;color:var(--accent);font-family:Syne,sans-serif;font-weight:700;margin-top:1px">${l}</div></div>`).join('')}</div>`;
+  $('mAnimPrev').style.display='flex';animDot('↔');
+  $('mDesc').textContent=`Fingerspell: ${lets.join(' → ')}`;$('mExtra').innerHTML='';
+  $('mMotion').style.display='block';$('mMotionText').textContent='Move smoothly between letters, brief pause on each.';
+  mo.classList.add('open');mc.focus();
+}
+mc.addEventListener('click',closeModal);
+mo.addEventListener('click',e=>{if(e.target===mo)closeModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&mo.classList.contains('open'))closeModal();});
+function closeModal(){mo.classList.remove('open');}
+
+// ── ALPHABET ──
+'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(l=>{
+  const ag=$('alphaGrid');
+  const t=document.createElement('div');t.className='alpha-tile';t.setAttribute('tabindex','0');t.setAttribute('role','listitem');t.setAttribute('aria-label',`Letter ${l}`);
+  t.innerHTML=`${getLS(l)}<div class="alpha-tile-letter">${l}</div>`;
+  const open=()=>showModal(l,{svg:getLS(l),desc:`ASL fingerspelling for the letter ${l}`,motion:'Hold clearly for 1 second',type:'fingerspell'},getLS(l));
+  t.addEventListener('click',open);t.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}});
+  ag.appendChild(t);
+});
+
+// ── KEYBOARD SHORTCUTS ──
+document.addEventListener('keydown',e=>{
+  if(document.activeElement===ti||document.activeElement===document.body.querySelector('input:focus'))return;
+  if(e.code==='Space'&&e.target===document.body){e.preventDefault();listening?stopL():startL();}
+  if((e.ctrlKey||e.metaKey)&&e.key==='p'){e.preventDefault();pbAuto?stopPlayback():startPlayback();}
+  if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();clearBtn.click();}
+});
+
+// ── TUTORIAL ──
+let tutStep=0;const tutTip=$('tutorialTip')||null;
+const tutSteps=[
+  {target:'micSection',title:'🎤 Step 1: Speak',text:'Click the microphone and say a sentence naturally. Or press Spacebar as a shortcut.'},
+  {target:'grammarPanel',title:'🧠 Step 2: Grammar',text:'SignBridge reorders your sentence into Topic-Comment sign language structure automatically.'},
+  {target:'signsOutput',title:'🤲 Step 3: Signs',text:'Each word appears as an illustrated hand diagram. Tap any card to see the full description and animated motion guide.'},
+  {target:'playbackBtn',title:'▶ Step 4: Playback',text:'Hit Play to step through signs one at a time — great for learning at your own pace.'},
+  {target:'shareBtn',title:'↑ Step 5: Share',text:'Share your signed sentence via URL, copy the sequence, or use your device\'s native share sheet.'},
+];
+let tipEl=null;
+function startTutorial(){tutStep=0;showTip();}
+tutBtn.addEventListener('click',startTutorial);
+function showTip(){
+  removeTip();
+  if(tutStep>=tutSteps.length)return;
+  const step=tutSteps[tutStep];
+  const target=document.getElementById(step.target)||document.querySelector('.'+step.target);
+  if(!target){tutStep++;showTip();return;}
+  tipEl=document.createElement('div');tipEl.className='tutorial-tip';
+  tipEl.innerHTML=`<strong>${step.title}</strong>${step.text}<div class="tip-btns"><button class="tip-btn" id="tipSkip">Skip</button><button class="tip-btn tip-next" id="tipNext">${tutStep<tutSteps.length-1?'Next →':'Done ✓'}</button></div><div class="tutorial-progress">${tutStep+1} / ${tutSteps.length}</div>`;
+  document.body.appendChild(tipEl);
+  const rect=target.getBoundingClientRect();
+  const top=rect.bottom+window.scrollY+8;
+  const left=Math.max(8,Math.min(rect.left+window.scrollX,window.innerWidth-260));
+  tipEl.style.top=top+'px';tipEl.style.left=left+'px';
+  target.style.outline='2px solid var(--accent)';target.style.outlineOffset='4px';
+  const cleanup=()=>{target.style.outline='';target.style.outlineOffset='';};
+  document.getElementById('tipNext').addEventListener('click',()=>{cleanup();tutStep++;showTip();});
+  document.getElementById('tipSkip').addEventListener('click',()=>{cleanup();removeTip();showToast('Tutorial skipped');});
+}
+function removeTip(){if(tipEl){tipEl.remove();tipEl=null;}}
+
+// ════════════════════════════════════════════════
+// MY VOICE ENGINE
+// Records audio → analyses pitch/tone via Web Audio API
+// → maps to SpeechSynthesis voice profile
+// → speaks typed text in that personalised voice
+// ════════════════════════════════════════════════
+const mvState = {
+  recording: false,
+  mediaRecorder: null,
+  audioCtx: null,
+  analyser: null,
+  stream: null,
+  waveTimer: null,
+  recordTimer: null,
+  recordSeconds: 0,
+  profile: null,          // { pitch, rate, voiceIdx, style, warmth, tone }
+  speaking: false,
+  selectedStyle: null,
+  pitchSlider: 1.0,
+  rateSlider: 0.9,
+};
+
+// Load saved profile from localStorage
+(function loadProfile(){
+  try{
+    const saved=localStorage.getItem('sb_voice_profile');
+    if(saved){
+      mvState.profile=JSON.parse(saved);
+      applyProfileToUI();
+    }
+  }catch(e){}
+})();
+
+function applyProfileToUI(){
+  const p=mvState.profile;
+  if(!p)return;
+  $('vpDot').classList.add('active');
+  $('vpStatusText').innerHTML=`Voice profile ready — <span class="vp-profile-name">Your Voice</span> · ${p.style||'warm'} style`;
+  $('vpStatusSub').textContent=`Pitch ${p.pitch?.toFixed(2)}× · Rate ${p.rate?.toFixed(2)}× · Recorded ${p.recordedAt||'earlier'}`;
+  $('mvStep1').classList.add('completed');$('mvStep2').classList.add('completed');
+  $('mvPitchSlider').value=p.pitch||1;$('mvPitchVal').textContent=(p.pitch||1).toFixed(2)+'×';
+  $('mvRateSlider').value=p.rate||0.9;$('mvRateVal').textContent=(p.rate||0.9).toFixed(2)+'×';
+  if(p.style)selectStyle(p.style,false);
+}
+
+// ── WAVEFORM VISUALISER ──
+const bars=['mvB1','mvB2','mvB3','mvB4','mvB5','mvB6','mvB7','mvB8','mvB9','mvB10','mvB11','mvB12'];
+function animateWave(analyser){
+  const buf=new Uint8Array(analyser.frequencyBinCount);
+  function draw(){
+    if(!mvState.recording)return;
+    analyser.getByteFrequencyData(buf);
+    bars.forEach((id,i)=>{
+      const el=$(`${id}`)||document.getElementById(id);
+      if(el){
+        const idx=Math.floor((i/bars.length)*buf.length*0.6);
+        const h=Math.max(4,Math.min(44,(buf[idx]/255)*48));
+        el.style.height=h+'px';
+        el.style.opacity=0.4+(h/48)*0.6;
+      }
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+function resetWave(){bars.forEach(id=>{const el=document.getElementById(id);if(el){el.style.height='4px';el.style.opacity='0.4';}});}
+
+// ── PITCH ANALYSIS ──
+function analysePitch(analyser,sampleRate){
+  const buf=new Float32Array(analyser.fftSize);
+  analyser.getFloatTimeDomainData(buf);
+
+  // Autocorrelation-based pitch detection
+  let bestOffset=-1,bestCorr=-1,lastCorr=-1,foundGoodCorr=false;
+  const rms=Math.sqrt(buf.reduce((s,v)=>s+v*v,0)/buf.length);
+  if(rms<0.01)return null; // silence
+
+  for(let offset=16;offset<buf.length/2;offset++){
+    let corr=0;
+    for(let i=0;i<buf.length/2;i++)corr+=buf[i]*buf[i+offset];
+    corr=2*corr/buf.length;
+    if(corr>0.9&&corr>lastCorr)foundGoodCorr=true;
+    if(foundGoodCorr&&corr<0.9*lastCorr){bestOffset=offset-1;break;}
+    if(corr>bestCorr){bestCorr=corr;bestOffset=offset;}
+    lastCorr=corr;
+  }
+  if(bestOffset===-1||bestCorr<0.01)return null;
+  return sampleRate/bestOffset;
+}
+
+// ── RECORD ──
+async function startRecording(){
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
+    mvState.stream=stream;
+    mvState.audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    const source=mvState.audioCtx.createMediaStreamSource(stream);
+    const analyser=mvState.audioCtx.createAnalyser();
+    analyser.fftSize=2048;analyser.smoothingTimeConstant=0.8;
+    source.connect(analyser);
+    mvState.analyser=analyser;
+    mvState.recording=true;
+    mvState.recordSeconds=0;
+
+    const btn=$('mvRecordBtn');
+    btn.textContent='⏹';btn.classList.add('recording');btn.setAttribute('aria-pressed','true');
+    $('mvRecordLabel').textContent='recording… tap to stop';
+    $('vpDot').classList.add('recording');
+
+    // Collect pitch samples
+    const pitchSamples=[];
+    mvState.waveTimer=setInterval(()=>{
+      animateWave(analyser);
+      const hz=analysePitch(analyser,mvState.audioCtx.sampleRate);
+      if(hz&&hz>60&&hz<600)pitchSamples.push(hz);
+    },100);
+
+    // Record timer display
+    mvState.recordTimer=setInterval(()=>{
+      mvState.recordSeconds++;
+      $('mvRecordTimer').textContent=mvState.recordSeconds+'s';
+      if(mvState.recordSeconds>=30)stopRecording(pitchSamples); // auto-stop at 30s
+    },1000);
+
+    mvState._pitchSamples=pitchSamples;
+    announce('Recording started. Make your natural sounds now.');
+
+  }catch(e){
+    showToast('Microphone access denied','error');
+  }
+}
+
+function stopRecording(samples){
+  mvState.recording=false;
+  clearInterval(mvState.waveTimer);clearInterval(mvState.recordTimer);
+  if(mvState.stream)mvState.stream.getTracks().forEach(t=>t.stop());
+
+  const btn=$('mvRecordBtn');
+  btn.textContent='🎙️';btn.classList.remove('recording');btn.setAttribute('aria-pressed','false');
+  $('mvRecordLabel').textContent='tap to re-record';
+  $('vpDot').classList.remove('recording');
+  $('mvRecordTimer').textContent='';
+  resetWave();
+
+  const pitchData=samples||mvState._pitchSamples||[];
+  buildVoiceProfile(pitchData);
+}
+
+// ── BUILD VOICE PROFILE ──
+function buildVoiceProfile(pitchSamples){
+  // Compute average pitch from samples
+  const avgHz=pitchSamples.length>0
+    ? pitchSamples.reduce((a,b)=>a+b,0)/pitchSamples.length
+    : 150; // fallback
+
+  // Map Hz to SpeechSynthesis pitch (0.5–2.0)
+  // Human voice: ~85Hz (deep) to ~255Hz (high)
+  const normalised=Math.max(0,Math.min(1,(avgHz-80)/(260-80)));
+  const synthPitch=0.7+normalised*0.9; // 0.7 (deep) to 1.6 (bright)
+
+  // Warmth: lower pitch = warmer
+  const warmth=normalised<0.35?'Warm':normalised<0.65?'Neutral':'Bright';
+  const tone=avgHz<120?'Bass':avgHz<180?'Tenor':avgHz<240?'Alto':'Soprano';
+
+  // Auto-suggest voice style
+  const autoStyle=normalised<0.35?'deep':normalised<0.65?'warm':'bright';
+
+  const profile={
+    pitch: parseFloat(synthPitch.toFixed(2)),
+    rate: 0.88,
+    style: autoStyle,
+    warmth,
+    tone,
+    avgHz: Math.round(avgHz),
+    voiceIdx: 0,
+    recordedAt: new Date().toLocaleTimeString(),
+  };
+
+  mvState.profile=profile;
+  localStorage.setItem('sb_voice_profile',JSON.stringify(profile));
+
+  // Update pitch/rate sliders to match
+  $('mvPitchSlider').value=profile.pitch;$('mvPitchVal').textContent=profile.pitch+'×';
+  $('mvRateSlider').value=profile.rate;$('mvRateVal').textContent=profile.rate+'×';
+
+  // Show pitch analysis display
+  const pd=$('pitchDisplay');pd.classList.add('visible');
+  // Build freq bars from sample distribution
+  const pb=$('pitchBars');pb.innerHTML='';
+  const buckets=8;const bucketData=new Array(buckets).fill(0);
+  pitchSamples.forEach(hz=>{const b=Math.min(buckets-1,Math.floor(((hz-80)/200)*buckets));bucketData[b]++;});
+  const maxB=Math.max(1,...bucketData);
+  bucketData.forEach(v=>{const bar=document.createElement('div');bar.className='pitch-bar';bar.style.height=Math.max(6,Math.round((v/maxB)*32))+'px';pb.appendChild(bar);});
+  $('pitchHz').textContent=Math.round(avgHz)+'Hz';
+  $('pitchWarmth').textContent=warmth;
+  $('pitchTone').textContent=tone;
+
+  // Update status
+  $('vpDot').classList.add('active');
+  $('vpStatusText').innerHTML=`Voice profile ready — <span class="vp-profile-name">Your Voice</span> · ${autoStyle} style`;
+  $('vpStatusSub').textContent=`Pitch ${profile.pitch}× · ${tone} range · ${Math.round(avgHz)}Hz average`;
+  $('mvStep1').classList.add('completed');
+
+  // Auto-select suggested style
+  selectStyle(autoStyle,true);
+
+  announce(`Voice profile created. Detected ${tone} tone at ${Math.round(avgHz)} Hz. Voice style set to ${autoStyle}.`);
+  showToast('✅ Voice profile created!','success');
+}
+
+// ── VOICE STYLE SELECT ──
+function selectStyle(style,autoSuggested=false){
+  mvState.selectedStyle=style;
+  document.querySelectorAll('.voice-style-card').forEach(c=>{
+    const sel=c.dataset.style===style;
+    c.classList.toggle('selected',sel);
+    c.setAttribute('aria-checked',sel);
+  });
+  // Apply style to pitch/rate
+  const styles={
+    warm:  {pitch:0.85,rate:0.82},
+    clear: {pitch:1.05,rate:0.95},
+    deep:  {pitch:0.65,rate:0.80},
+    bright:{pitch:1.3, rate:1.0 },
+  };
+  const st=styles[style]||styles.warm;
+  if(mvState.profile){
+    // Blend style with recorded pitch — give recorded pitch 60% weight
+    const blended=(mvState.profile.pitch*0.6+st.pitch*0.4);
+    mvState.profile.pitch=parseFloat(blended.toFixed(2));
+    mvState.profile.rate=st.rate;
+    mvState.profile.style=style;
+    localStorage.setItem('sb_voice_profile',JSON.stringify(mvState.profile));
+    $('mvPitchSlider').value=mvState.profile.pitch;$('mvPitchVal').textContent=mvState.profile.pitch.toFixed(2)+'×';
+    $('mvRateSlider').value=mvState.profile.rate;$('mvRateVal').textContent=mvState.profile.rate.toFixed(2)+'×';
+  } else {
+    $('mvPitchSlider').value=st.pitch;$('mvPitchVal').textContent=st.pitch.toFixed(2)+'×';
+    $('mvRateSlider').value=st.rate;$('mvRateVal').textContent=st.rate.toFixed(2)+'×';
+  }
+  $('mvStep2').classList.add('completed');
+  if(!autoSuggested)showToast('Voice style: '+style);
+}
+
+// Style card clicks
+document.querySelectorAll('.voice-style-card').forEach(c=>{
+  c.addEventListener('click',()=>selectStyle(c.dataset.style));
+  c.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();selectStyle(c.dataset.style);}});
+});
+
+// ── SLIDERS ──
+$('mvPitchSlider').addEventListener('input',function(){
+  $('mvPitchVal').textContent=parseFloat(this.value).toFixed(2)+'×';
+  if(mvState.profile){mvState.profile.pitch=parseFloat(this.value);localStorage.setItem('sb_voice_profile',JSON.stringify(mvState.profile));}
+});
+$('mvRateSlider').addEventListener('input',function(){
+  $('mvRateVal').textContent=parseFloat(this.value).toFixed(2)+'×';
+  if(mvState.profile){mvState.profile.rate=parseFloat(this.value);localStorage.setItem('sb_voice_profile',JSON.stringify(mvState.profile));}
+});
+
+// ── RECORD BUTTON ──
+$('mvRecordBtn').addEventListener('click',()=>{
+  if(mvState.recording)stopRecording(mvState._pitchSamples);
+  else startRecording();
+});
+$('mvRecordBtn').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('mvRecordBtn').click();}});
+
+// ── SPEAK BUTTON ──
+$('mvSpeakBtn').addEventListener('click',async()=>{
+  const text=$('mvSpeakInput').value.trim();
+  if(!text){showToast('Type something to say first','error');$('mvSpeakInput').focus();return;}
+  if(!('speechSynthesis'in window)){showToast('Speech not supported in this browser','error');return;}
+
+  if(mvState.speaking){
+    speechSynthesis.cancel();setSpeakingState(false);return;
+  }
+
+  setSpeakingState(true);
+
+  // Get voices
+  let voices=speechSynthesis.getVoices();
+  if(!voices.length){
+    await new Promise(r=>setTimeout(r,300));
+    voices=speechSynthesis.getVoices();
+  }
+
+  // Pick best voice based on profile
+  const profile=mvState.profile;
+  const pitch=parseFloat($('mvPitchSlider').value)||1.0;
+  const rate=parseFloat($('mvRateSlider').value)||0.9;
+  const style=mvState.selectedStyle||'warm';
+
+  // Voice selection heuristic: prefer natural/neural voices; match gender hint from pitch
+  const preferFemale=pitch>1.0;
+  const preferred=voices.filter(v=>v.lang.startsWith('en')).sort((a,b)=>{
+    // Score each voice
+    const score=v=>{
+      let s=0;
+      if(v.lang==='en-US')s+=2;
+      if(!v.name.toLowerCase().includes('compact'))s+=1;
+      if(preferFemale&&(v.name.toLowerCase().includes('female')||v.name.toLowerCase().includes('woman')||/samantha|victoria|karen|moira|tessa|alice|serena/i.test(v.name)))s+=3;
+      if(!preferFemale&&(v.name.toLowerCase().includes('male')||/daniel|alex|fred|tom|oliver|arthur/i.test(v.name)))s+=3;
+      return s;
+    };
+    return score(b)-score(a);
+  });
+
+  const voice=preferred[0]||voices.find(v=>v.lang.startsWith('en'))||voices[0];
+
+  const utt=new SpeechSynthesisUtterance(text);
+  utt.voice=voice;
+  utt.pitch=Math.max(0.5,Math.min(2,pitch));
+  utt.rate=Math.max(0.5,Math.min(1.5,rate));
+  utt.volume=1;
+
+  utt.onend=()=>setSpeakingState(false);
+  utt.onerror=()=>setSpeakingState(false);
+
+  speechSynthesis.cancel();
+  speechSynthesis.speak(utt);
+  announce(`Speaking: ${text}`);
+});
+
+function setSpeakingState(speaking){
+  mvState.speaking=speaking;
+  const btn=$('mvSpeakBtn'),wave=$('speakingWave');
+  if(speaking){
+    btn.classList.add('speaking');
+    $('mvSpeakBtnText').textContent='Speaking… (tap to stop)';
+    $('mvSpeakBtnIcon').textContent='🔊';
+    wave.classList.add('active');
+  } else {
+    btn.classList.remove('speaking');
+    $('mvSpeakBtnText').textContent='Speak For Me';
+    $('mvSpeakBtnIcon').textContent='🗣️';
+    wave.classList.remove('active');
+  }
+}
+
+// ── CHAR COUNT ──
+$('mvSpeakInput').addEventListener('input',function(){
+  $('mvCharCount').textContent=this.value.length+' chars';
+});
+
+// ── AUTO-FILL FROM LAST SIGNED SENTENCE ──
+$('mvAutofill').addEventListener('click',()=>{
+  if(!history.length){showToast('Sign a sentence first','error');return;}
+  const last=history[history.length-1];
+  const natural=last.original;
+  $('mvSpeakInput').value=natural;
+  $('mvCharCount').textContent=natural.length+' chars';
+  $('mvSpeakInput').focus();
+  showToast('Filled from last signed sentence');
+});
+
+// ── SERVICE WORKER (PWA offline) ──
+if('serviceWorker'in navigator){
+  const swCode=`
+const CACHE='signbridge-v5';
+const ASSETS=['${location.href}'];
+self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS))));
+self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(res=>{const rc=res.clone();caches.open(CACHE).then(c=>c.put(e.request,rc));return res;}).catch(()=>caches.match(e.request)))));
+self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));
+  `;
+  const blob=new Blob([swCode],{type:'application/javascript'});
+  const swURL=URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swURL).then(()=>{
+    // SW registered silently
+  }).catch(()=>{/* SW not critical */});
+}
+</script>
+</body>
+</html>
