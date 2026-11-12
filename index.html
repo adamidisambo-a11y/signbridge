@@ -1315,12 +1315,30 @@ mo.addEventListener('click',e=>{if(e.target===mo)closeModal();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&mo.classList.contains('open'))closeModal();});
 function closeModal(){mo.classList.remove('open');}
 
+// Alphabet learning controls: move through letters without closing the modal.
+function showAlphabetLetter(letter){
+  const alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const idx=alphabet.indexOf(letter);
+  if(idx<0)return;
+  showModal(letter,{svg:getLS(letter),desc:`ASL fingerspelling for the letter ${letter}`,motion:'Hold clearly for 1 second',type:'fingerspell'},getLS(letter));
+  const controls=document.createElement('div');
+  controls.style.cssText='display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:16px';
+  const prev=document.createElement('button');prev.type='button';prev.textContent='← Previous';prev.disabled=idx===0;
+  const count=document.createElement('span');count.textContent=`${idx+1} of 26`;count.setAttribute('aria-live','polite');
+  const next=document.createElement('button');next.type='button';next.textContent=idx===25?'Finish':'Next →';
+  for(const b of [prev,next]){b.style.cssText='padding:10px 15px;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer';}
+  prev.addEventListener('click',()=>showAlphabetLetter(alphabet[idx-1]));
+  next.addEventListener('click',()=>idx===25?closeModal():showAlphabetLetter(alphabet[idx+1]));
+  controls.append(prev,count,next);$('mExtra').replaceChildren(controls);
+  next.focus();
+}
+
 // ── ALPHABET ──
 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(l=>{
   const ag=$('alphaGrid');
   const t=document.createElement('div');t.className='alpha-tile';t.setAttribute('tabindex','0');t.setAttribute('role','listitem');t.setAttribute('aria-label',`Letter ${l}`);
   t.innerHTML=`${getLS(l)}<div class="alpha-tile-letter">${l}</div>`;
-  const open=()=>showModal(l,{svg:getLS(l),desc:`ASL fingerspelling for the letter ${l}`,motion:'Hold clearly for 1 second',type:'fingerspell'},getLS(l));
+  const open=()=>showAlphabetLetter(l);
   t.addEventListener('click',open);t.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}});
   ag.appendChild(t);
 });
