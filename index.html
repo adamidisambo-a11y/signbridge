@@ -1840,14 +1840,23 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
  function clearURL(){if(url){URL.revokeObjectURL(url);url=null}save.hidden=true;save.removeAttribute('href')}
  function stopRecording(){if(recorder&&recorder.state==='recording'){recorder.stop()}stop.disabled=true;record.disabled=true}
  async function startCamera(){
-  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){message('Camera is unavailable in this browser. Try HTTPS on Chrome or choose a video.');return}
+  message('Opening camera… Please allow camera access if your browser asks.');
+  start.disabled=true;
+  if(!window.isSecureContext){message('Camera requires a secure HTTPS page. Open https://signbridge-asl.netlify.app/ directly in Chrome.');start.disabled=false;return}
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){message('This browser cannot access the camera. Open the site in Chrome or Safari, not inside another app.');start.disabled=false;return}
   stopRecording();release();clearURL();video.pause();video.removeAttribute('src');video.srcObject=null;
   try{
-   stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
-   video.srcObject=stream;video.muted=true;video.controls=false;await video.play();
+   try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false})}
+   catch(first){if(first.name==='OverconstrainedError'||first.name==='NotFoundError')stream=await navigator.mediaDevices.getUserMedia({video:true,audio:false});else throw first}
+   video.srcObject=stream;video.muted=true;video.controls=false;video.setAttribute('autoplay','');video.setAttribute('playsinline','');
+   try{await video.play()}catch(playError){message('Camera access granted. Tap the video preview to start it.')}
    record.disabled=!window.MediaRecorder;start.disabled=true;
-   message(window.MediaRecorder?'Camera ready. Press Record to capture your signing.':'Camera ready. This browser cannot record; use Choose video instead.');
-  }catch(e){release();message('Camera could not start. Check camera permission or use Choose video.')}
+   if(!status.textContent.includes('Tap the video'))message(window.MediaRecorder?'Camera ready. Press Record to capture your signing.':'Camera ready. Recording is not supported here; try Choose video.');
+  }catch(e){
+   release();
+   const reason=e.name==='NotAllowedError'||e.name==='PermissionDeniedError'?'Camera permission was blocked. Allow camera access in your browser site settings and try again.':e.name==='NotFoundError'?'No camera was found on this device.':e.name==='NotReadableError'?'The camera is busy in another app. Close other camera apps and retry.':'Could not open camera ('+(e.name||'unknown error')+'). Try Chrome or choose a video.';
+   message(reason);
+  }
  }
  start.addEventListener('click',startCamera);
  record.addEventListener('click',()=>{
