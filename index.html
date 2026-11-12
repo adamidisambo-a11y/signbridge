@@ -476,6 +476,7 @@ body.sb-simple #statsPanel,body.sb-simple #myVoicePanel,body.sb-simple .alpha-pa
 body.sb-sign-mode #appCard,body.sb-sign-mode .lang-bar,body.sb-sign-mode .phase-banner{display:none!important}
 body.sb-sign-mode #sbCameraNotice{display:block}
 @media(max-width:520px){.sb-mode-picker{grid-template-columns:1fr}.sb-mode{min-height:72px;padding:14px}}
+.sb-camera-notice video{display:block;width:100%;max-height:400px;background:#10131c;border-radius:12px;margin:12px 0}.sb-video-actions{display:flex;flex-wrap:wrap;gap:9px;margin:14px 0}.sb-upload-label{cursor:pointer}.sb-camera-notice [hidden]{display:none!important}.sb-camera-notice p{line-height:1.5}
 </style>
 <link rel="manifest" href="./manifest.webmanifest">
 </head>
@@ -552,12 +553,22 @@ body.sb-sign-mode #sbCameraNotice{display:block}
     <!-- Simple two-way navigation: camera recognition is a future level. -->
     <div class="sb-mode-picker" role="group" aria-label="Choose communication direction">
       <button type="button" id="sbSpeakMode" class="sb-mode active" aria-pressed="true"><strong>🎤 Speak to Signs</strong><span>Speak or type a message</span></button>
-      <button type="button" id="sbSignMode" class="sb-mode" aria-pressed="false"><strong>📷 Signs to Speech</strong><span>Camera recognition — coming soon</span></button>
+      <button type="button" id="sbSignMode" class="sb-mode" aria-pressed="false"><strong>📷 Signs to Speech</strong><span>Record or choose a signing video</span></button>
     </div>
     <div id="sbCameraNotice" class="sb-camera-notice" hidden role="status">
       <h2>📷 Signs to Speech</h2>
-      <p>Camera-based sign recognition is being developed. It is not available yet. For now, you can learn fingerspelling below.</p>
-      <button type="button" id="sbBackToSpeak" class="btn btn-primary">← Speak to Signs</button>
+      <p>Record your signing or choose a video to review. <strong>Automatic sign recognition is not available yet.</strong></p>
+      <video id="sbVideo" playsinline controls aria-label="Signing video preview"></video>
+      <div class="sb-video-actions">
+        <button type="button" id="sbStartCamera" class="btn btn-primary">📷 Start camera</button>
+        <button type="button" id="sbRecordVideo" class="btn" disabled>⏺ Record</button>
+        <button type="button" id="sbStopVideo" class="btn" disabled>■ Stop</button>
+        <label class="btn sb-upload-label" for="sbUploadVideo">↑ Choose video</label>
+        <input type="file" id="sbUploadVideo" accept="video/*" aria-label="Choose a signing video" hidden>
+      </div>
+      <p id="sbVideoStatus" role="status" aria-live="polite">Video stays on your device. Camera access is requested only when you start it.</p>
+      <a id="sbSaveVideo" class="btn" download="signbridge-signing.webm" hidden>↓ Save recording</a>
+      <button type="button" id="sbBackToSpeak" class="btn">← Speak to Signs</button>
     </div>
     <button type="button" id="sbMoreTools" class="sb-more-toggle" aria-expanded="false">⚙ More tools and learning ▾</button>
     <!-- Lang bar -->
@@ -1818,6 +1829,58 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
     more.textContent=simple?'⚙ More tools and learning ▾':'⚙ Hide extra tools ▴';
   });
   document.body.classList.add('sb-simple');
+})();
+</script>
+<script>
+(function(){
+ const video=document.getElementById('sbVideo'),start=document.getElementById('sbStartCamera'),record=document.getElementById('sbRecordVideo'),stop=document.getElementById('sbStopVideo'),upload=document.getElementById('sbUploadVideo'),save=document.getElementById('sbSaveVideo'),status=document.getElementById('sbVideoStatus');
+ let stream=null,recorder=null,chunks=[],url=null;
+ function message(m){status.textContent=m}
+ function release(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}record.disabled=true;start.disabled=false}
+ function clearURL(){if(url){URL.revokeObjectURL(url);url=null}save.hidden=true;save.removeAttribute('href')}
+ function stopRecording(){if(recorder&&recorder.state==='recording'){recorder.stop()}stop.disabled=true;record.disabled=true}
+ async function startCamera(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){message('Camera is unavailable in this browser. Try HTTPS on Chrome or choose a video.');return}
+  stopRecording();release();clearURL();video.pause();video.removeAttribute('src');video.srcObject=null;
+  try{
+   stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
+   video.srcObject=stream;video.muted=true;video.controls=false;await video.play();
+   record.disabled=!window.MediaRecorder;start.disabled=true;
+   message(window.MediaRecorder?'Camera ready. Press Record to capture your signing.':'Camera ready. This browser cannot record; use Choose video instead.');
+  }catch(e){release();message('Camera could not start. Check camera permission or use Choose video.')}
+ }
+ start.addEventListener('click',startCamera);
+ record.addEventListener('click',()=>{
+  if(!stream||!window.MediaRecorder)return;
+  try{
+   chunks=[];clearURL();
+   const preferred=['video/webm;codecs=vp8','video/webm','video/mp4'].find(t=>MediaRecorder.isTypeSupported(t));
+   recorder=new MediaRecorder(stream,preferred?{mimeType:preferred}:undefined);
+   const mime=recorder.mimeType||'video/webm';
+   recorder.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
+   recorder.onstop=()=>{
+    const blob=new Blob(chunks,{type:mime});chunks=[];
+    release();video.pause();video.srcObject=null;video.muted=false;video.controls=true;
+    if(blob.size){url=URL.createObjectURL(blob);video.src=url;video.load();save.href=url;save.download=mime.includes('mp4')?'signbridge-signing.mp4':'signbridge-signing.webm';save.hidden=false;message('Recording ready. Play it back or save it to your device.')}
+    else message('No video was captured. Please try again.');
+   };
+   recorder.onerror=()=>{message('Recording failed. Please try again.');stopRecording()};
+   recorder.start();record.disabled=true;stop.disabled=false;message('Recording… Press Stop when finished.');
+  }catch(e){message('Recording is not supported on this device. Try Choose video.')}
+ });
+ stop.addEventListener('click',stopRecording);
+ upload.addEventListener('change',()=>{
+  const file=upload.files&&upload.files[0];if(!file)return;
+  if(!file.type.startsWith('video/')){message('Please choose a video file.');return}
+  stopRecording();if(recorder)recorder.onstop=null;release();stop.disabled=true;clearURL();
+  video.pause();video.srcObject=null;video.muted=false;video.controls=true;
+  url=URL.createObjectURL(file);video.src=url;video.load();message('Video loaded for playback. No video was uploaded to a server.');
+  upload.value='';
+ });
+ function leave(){if(recorder&&recorder.state==='recording')stopRecording();else release()}
+ document.getElementById('sbBackToSpeak').addEventListener('click',leave);
+ document.getElementById('sbSpeakMode').addEventListener('click',leave);
+ window.addEventListener('pagehide',()=>{leave();clearURL()});
 })();
 </script>
 </body>
