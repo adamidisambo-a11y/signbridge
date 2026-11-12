@@ -742,6 +742,10 @@ footer a:hover{text-decoration:underline;}
     <!-- Alphabet -->
     <section class="alpha-panel" aria-label="Fingerspelling A–Z reference">
       <h2>🖐 <span>Fingerspelling</span> Reference — A to Z</h2>
+      <form id="spellWordForm" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px" aria-label="Spell your own word">
+        <input id="spellWordInput" aria-label="Word to fingerspell" placeholder="Type a word, e.g. HELLO" maxlength="32" required style="flex:1;min-width:170px;padding:11px;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--text)">
+        <button type="submit" class="btn btn-sm">Spell My Word →</button>
+      </form>
       <div class="alpha-grid" id="alphaGrid" role="list"></div>
     </section>
 
@@ -1314,6 +1318,29 @@ mc.addEventListener('click',closeModal);
 mo.addEventListener('click',e=>{if(e.target===mo)closeModal();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&mo.classList.contains('open'))closeModal();});
 function closeModal(){mo.classList.remove('open');}
+
+// Spell any entered word using the existing illustrated ASL alphabet.
+function showWordLetter(word,index){
+  const letters=word.split('');
+  if(index<0||index>=letters.length)return;
+  const letter=letters[index];
+  showModal(letter,{svg:getLS(letter),desc:`Fingerspelling ${word}: letter ${index+1} of ${letters.length}`,motion:'Hold clearly, then move to the next letter',type:'word practice'},getLS(letter));
+  const controls=document.createElement('div');
+  controls.style.cssText='display:flex;gap:9px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:16px';
+  const prev=document.createElement('button');prev.type='button';prev.textContent='← Previous';prev.disabled=index===0;
+  const count=document.createElement('span');count.textContent=`${word} · ${index+1}/${letters.length}`;count.setAttribute('aria-live','polite');
+  const next=document.createElement('button');next.type='button';next.textContent=index===letters.length-1?'Finish':'Next →';
+  for(const b of [prev,next])b.style.cssText='padding:10px 15px;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer';
+  prev.addEventListener('click',()=>showWordLetter(word,index-1));
+  next.addEventListener('click',()=>index===letters.length-1?closeModal():showWordLetter(word,index+1));
+  controls.append(prev,count,next);$('mExtra').replaceChildren(controls);next.focus();
+}
+$('spellWordForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const raw=$('spellWordInput').value.trim().toUpperCase();
+  if(!/^[A-Z]+$/.test(raw)){showToast('Please enter one word using A–Z letters','error');return;}
+  showWordLetter(raw,0);
+});
 
 // Alphabet learning controls: move through letters without closing the modal.
 function showAlphabetLetter(letter){
