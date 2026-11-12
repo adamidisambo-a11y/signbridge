@@ -1057,14 +1057,14 @@ function setupRec(){
     let fin='',int='';
     for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)fin+=e.results[i][0].transcript;else int+=e.results[i][0].transcript;}
     interim=int;
-    if(fin)processSentence(fin.trim(),true);
+    if(fin){interim='';processSentence(fin.trim(),true);}
     updateTtext();
   };
   r.onerror=e=>{micStatus.textContent='error: '+e.error;stopL();};
   r.onend=()=>{if(listening)r.start();};
   return r;
 }
-function startL(){if(!rec)rec=setupRec();if(!rec)return;listening=true;rec.start();micBtn.classList.add('listening');micBtn.textContent='⏹';micBtn.setAttribute('aria-pressed','true');micBtn.setAttribute('aria-label','Stop recording');micStatus.textContent='● recording — speak clearly';micStatus.classList.add('active');announce('Recording started');}
+function startL(){if('speechSynthesis' in window)speechSynthesis.cancel();if(!rec)rec=setupRec();if(!rec)return;listening=true;rec.start();micBtn.classList.add('listening');micBtn.textContent='⏹';micBtn.setAttribute('aria-pressed','true');micBtn.setAttribute('aria-label','Stop recording');micStatus.textContent='● recording — speak clearly';micStatus.classList.add('active');announce('Recording started');}
 function stopL(){listening=false;if(rec)rec.stop();micBtn.classList.remove('listening');micBtn.textContent='🎤';micBtn.setAttribute('aria-pressed','false');micBtn.setAttribute('aria-label','Start recording');micStatus.textContent='click microphone to start speaking';micStatus.classList.remove('active');announce('Stopped');}
 micBtn.addEventListener('click',()=>listening?stopL():startL());
 
@@ -1100,7 +1100,7 @@ function processSentence(text,append=true){
   updateStats();
   announce('Translated: '+labeled.map(t=>t.word).join(', '));
   // TTS
-  if('speechSynthesis'in window){const u=new SpeechSynthesisUtterance(labeled.map(t=>t.word).join(', '));u.rate=.88;speechSynthesis.cancel();speechSynthesis.speak(u);}
+  if(!listening && 'speechSynthesis' in window){const u=new SpeechSynthesisUtterance(labeled.map(t=>t.word).join(', '));u.rate=.88;speechSynthesis.cancel();speechSynthesis.speak(u);}
 }
 
 function reprocessAll(){
