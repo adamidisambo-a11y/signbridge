@@ -463,6 +463,19 @@ footer a:hover{text-decoration:underline;}
   .sign-card svg{width:68px;height:68px;}
   .export-grid{grid-template-columns:1fr;}
 }
+
+/* Level 2: simple-first layout */
+.sb-mode-picker{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0}
+.sb-mode{min-height:94px;padding:18px;text-align:left;border:1px solid var(--border);border-radius:15px;background:var(--surface);color:var(--text);cursor:pointer;display:flex;flex-direction:column;gap:9px}
+.sb-mode strong{font-size:1.02rem}.sb-mode span{font-size:.79rem;color:var(--muted)}
+.sb-mode.active{border:2px solid var(--accent);background:var(--surface2)}
+.sb-camera-notice{padding:24px;border:1px solid var(--border);border-radius:16px;background:var(--surface);margin-bottom:16px}
+.sb-camera-notice[hidden]{display:none!important}
+.sb-more-toggle{display:block;width:100%;margin:8px 0 16px;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--surface2);color:var(--text);cursor:pointer}
+body.sb-simple #statsPanel,body.sb-simple #myVoicePanel,body.sb-simple .alpha-panel,body.sb-simple .history-panel,body.sb-simple .phase-banner{display:none!important}
+body.sb-sign-mode #appCard,body.sb-sign-mode .lang-bar,body.sb-sign-mode .phase-banner{display:none!important}
+body.sb-sign-mode #sbCameraNotice{display:block}
+@media(max-width:520px){.sb-mode-picker{grid-template-columns:1fr}.sb-mode{min-height:72px;padding:14px}}
 </style>
 <link rel="manifest" href="./manifest.webmanifest">
 </head>
@@ -536,6 +549,17 @@ footer a:hover{text-decoration:underline;}
       <p>Grammar-aware, illustrated, accessible sign language translation. Supports ASL, BSL, Auslan, LSF, DGS and ISL.</p>
     </div>
 
+    <!-- Simple two-way navigation: camera recognition is a future level. -->
+    <div class="sb-mode-picker" role="group" aria-label="Choose communication direction">
+      <button type="button" id="sbSpeakMode" class="sb-mode active" aria-pressed="true"><strong>🎤 Speak to Signs</strong><span>Speak or type a message</span></button>
+      <button type="button" id="sbSignMode" class="sb-mode" aria-pressed="false"><strong>📷 Signs to Speech</strong><span>Camera recognition — coming soon</span></button>
+    </div>
+    <div id="sbCameraNotice" class="sb-camera-notice" hidden role="status">
+      <h2>📷 Signs to Speech</h2>
+      <p>Camera-based sign recognition is being developed. It is not available yet. For now, you can learn fingerspelling below.</p>
+      <button type="button" id="sbBackToSpeak" class="btn btn-primary">← Speak to Signs</button>
+    </div>
+    <button type="button" id="sbMoreTools" class="sb-more-toggle" aria-expanded="false">⚙ More tools and learning ▾</button>
     <!-- Lang bar -->
     <div class="lang-bar" role="group" aria-label="Select sign language">
       <button class="lang-btn active" data-lang="ASL" aria-pressed="true">🇺🇸 ASL</button>
@@ -1772,6 +1796,29 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
       .catch(err => console.warn('Offline support unavailable:', err));
   });
 }
+</script>
+<script>
+// Level 2: two primary choices, with advanced tools available on demand.
+(function(){
+  const speak=document.getElementById('sbSpeakMode'),sign=document.getElementById('sbSignMode');
+  const more=document.getElementById('sbMoreTools');
+  function mode(which){
+    const signing=which==='sign';
+    document.body.classList.toggle('sb-sign-mode',signing);
+    speak.classList.toggle('active',!signing);sign.classList.toggle('active',signing);
+    speak.setAttribute('aria-pressed',String(!signing));sign.setAttribute('aria-pressed',String(signing));
+    if(signing){const mic=document.getElementById('micBtn');if(mic&&mic.getAttribute('aria-pressed')==='true')mic.click();}
+  }
+  speak.addEventListener('click',()=>mode('speak'));
+  sign.addEventListener('click',()=>mode('sign'));
+  document.getElementById('sbBackToSpeak').addEventListener('click',()=>mode('speak'));
+  more.addEventListener('click',()=>{
+    const simple=document.body.classList.toggle('sb-simple');
+    more.setAttribute('aria-expanded',String(!simple));
+    more.textContent=simple?'⚙ More tools and learning ▾':'⚙ Hide extra tools ▴';
+  });
+  document.body.classList.add('sb-simple');
+})();
 </script>
 </body>
 </html>
