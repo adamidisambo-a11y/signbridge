@@ -1,0 +1,29 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SignBridge — Camera</title><style>body{font:16px system-ui,sans-serif;background:#0a0e1a;color:#f6f7fb;margin:0;padding:18px}main{max-width:680px;margin:auto}a{color:#93c5fd}h1{font-size:1.5rem}video{width:100%;max-height:65vh;background:#141824;border-radius:14px;margin:14px 0}button,.button{display:inline-block;border:0;border-radius:12px;padding:14px 18px;background:#2563eb;color:white;font:inherit;font-weight:650;margin:4px;cursor:pointer}button:disabled{opacity:.4}#status{padding:12px;background:#20283b;border-radius:10px;min-height:24px}input{max-width:100%}</style></head><body><main><a href="./index.html">← Back to SignBridge</a><h1>📷 Record signing</h1><p>Record or select a video. Automatic sign recognition is not available yet.</p><video id="preview" playsinline controls></video><div><button id="start">Start camera</button><button id="record" disabled>⏺ Record</button><button id="stop" disabled>■ Stop</button></div><p><label for="file">Choose an existing video:</label> <input type="file" id="file" accept="video/*"></p><a id="save" class="button" hidden download="signbridge-signing.webm">Save recording</a><p id="status" role="status" aria-live="polite">Tap Start camera. Your videos stay on this device.</p></main><script>
+const $=id=>document.getElementById(id),v=$('preview'),start=$('start'),record=$('record'),stop=$('stop'),save=$('save'),status=$('status');let stream=null,rec=null,chunks=[],url=null;
+function msg(s){status.textContent=s}
+function release(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}start.disabled=false;record.disabled=true;stop.disabled=true}
+function clearUrl(){if(url){URL.revokeObjectURL(url);url=null}save.hidden=true;save.removeAttribute('href')}
+start.onclick=async()=>{
+ msg('Requesting camera permission…');start.disabled=true;
+ if(!isSecureContext||!navigator.mediaDevices?.getUserMedia){msg('Camera requires HTTPS and a compatible browser. Open this site directly in Chrome or Safari.');start.disabled=false;return}
+ try{
+  release();clearUrl();v.pause();v.srcObject=null;v.removeAttribute('src');
+  try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false})}
+  catch(e){if(['NotFoundError','OverconstrainedError'].includes(e.name))stream=await navigator.mediaDevices.getUserMedia({video:true,audio:false});else throw e}
+  v.srcObject=stream;v.muted=true;v.controls=false;try{await v.play()}catch(e){}
+  start.disabled=true;record.disabled=!window.MediaRecorder;
+  msg('Camera opened. Tap Record to capture signing.');
+ }catch(e){release();msg(e.name==='NotAllowedError'?'Camera permission denied. Open Chrome site settings and allow Camera.':e.name==='NotReadableError'?'Camera is busy. Close other apps using it.':'Camera failed: '+e.name+' — '+e.message)}
+};
+record.onclick=()=>{
+ if(!stream||!window.MediaRecorder)return;
+ try{chunks=[];const types=['video/webm;codecs=vp8','video/webm','video/mp4'];const type=types.find(t=>MediaRecorder.isTypeSupported(t));rec=new MediaRecorder(stream,type?{mimeType:type}:undefined);
+ rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
+ rec.onstop=()=>{const blob=new Blob(chunks,{type:rec.mimeType||'video/webm'});release();v.pause();v.srcObject=null;v.controls=true;v.muted=false;if(!blob.size){msg('Recording was empty. Try again.');return}clearUrl();url=URL.createObjectURL(blob);v.src=url;v.load();save.href=url;save.download=blob.type.includes('mp4')?'signbridge-signing.mp4':'signbridge-signing.webm';save.hidden=false;msg('Recording complete. Play or save your video.')};
+ rec.start();record.disabled=true;stop.disabled=false;msg('Recording… tap Stop when finished.');
+ }catch(e){msg('Recording error: '+e.message)}
+};
+stop.onclick=()=>{if(rec?.state==='recording')rec.stop();stop.disabled=true};
+$('file').onchange=e=>{const f=e.target.files?.[0];if(!f)return;if(!f.type.startsWith('video/')){msg('Choose a video file.');return}if(rec?.state==='recording'){rec.onstop=null;rec.stop()}release();clearUrl();v.pause();v.srcObject=null;v.controls=true;v.muted=false;url=URL.createObjectURL(f);v.src=url;v.load();msg('Video ready to play. Nothing was sent to a server.')};
+window.addEventListener('pagehide',()=>{release();clearUrl()});
+</script></body></html>
